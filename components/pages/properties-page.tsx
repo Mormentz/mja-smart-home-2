@@ -8,7 +8,7 @@ import { Footer } from "@/components/site/Footer";
 import { PropertyCard } from "@/components/property-card";
 import type { Property } from "@/lib/properties";
 
-const filters = ["All", "For Sale", "For Rent", "House", "Apartment", "Villa", "Loft", "Penthouse", "Townhouse"] as const;
+const filters = ["All", "Verified", "For Sale", "For Rent", "House", "Apartment", "Villa", "Loft", "Penthouse", "Townhouse"] as const;
 
 export default function PropertiesPage({ properties }: { properties: Property[] }) {
   const [active, setActive] = useState<(typeof filters)[number]>("All");
@@ -18,6 +18,7 @@ export default function PropertiesPage({ properties }: { properties: Property[] 
     return properties.filter((p) => {
       const matchFilter =
         active === "All" ||
+        (active === "Verified" && p.verificationStatus === "VERIFIED") ||
         p.type === active ||
         p.category === active;
       const matchQ =

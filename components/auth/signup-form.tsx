@@ -43,7 +43,12 @@ export function SignupForm() {
     setLoading(true);
     setError(null);
 
-    const result = await registerUser({ name, email, password, role });
+    const result = await registerUser({
+      name,
+      email,
+      password,
+      role: role as "RENTER" | "BUYER" | "LANDLORD" | "AGENT" | "ARTISAN",
+    });
     if (result.error) {
       setLoading(false);
       setError(result.error);

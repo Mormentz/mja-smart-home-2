@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowLeft, Bath, BedDouble, MapPin, Ruler, ShieldCheck, Check } from "lucide-react";
+import { ArrowLeft, Bath, BedDouble, MapPin, Ruler, ShieldCheck, Check, ShieldAlert } from "lucide-react";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { PropertyActions } from "@/components/property-actions";
@@ -13,10 +13,14 @@ import detailKitchen from "@/assets/detail-kitchen.jpg";
 export function PropertyDetailPage({
   property: p,
   similar,
+  saved = false,
 }: {
   property: Property;
   similar: Property[];
+  saved?: boolean;
 }) {
+  const verified = p.verificationStatus === "VERIFIED";
+  const n = p.neighborhood;
 
   return (
     <div className="min-h-screen bg-background">
@@ -28,9 +32,18 @@ export function PropertyDetailPage({
               <Link href="/properties" className="inline-flex items-center gap-2 text-ink-foreground/70 hover:text-ink-foreground text-sm">
                 <ArrowLeft size={14} /> All properties
               </Link>
-              <div className="mt-4 flex gap-2">
+              <div className="mt-4 flex flex-wrap gap-2">
                 <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-success text-ink">{p.type}</span>
                 <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-ink-foreground/10 border border-ink-foreground/15">{p.category}</span>
+                {verified ? (
+                  <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-secondary text-secondary-foreground inline-flex items-center gap-1">
+                    <ShieldCheck size={12} /> Verified
+                  </span>
+                ) : (
+                  <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-ink-foreground/10 border border-ink-foreground/15 inline-flex items-center gap-1">
+                    <ShieldAlert size={12} /> {p.verificationStatus ?? "UNVERIFIED"}
+                  </span>
+                )}
               </div>
               <h1 className="mt-4 font-display text-4xl md:text-6xl font-semibold text-balance">{p.title}</h1>
               <p className="mt-3 inline-flex items-center gap-2 text-ink-foreground/70"><MapPin size={16} /> {p.location}</p>
@@ -60,6 +73,21 @@ export function PropertyDetailPage({
         </div>
       </section>
 
+      {p.tourUrl && (
+        <section className="container-page mt-10">
+          <h2 className="font-display text-2xl font-semibold">Virtual tour</h2>
+          <div className="mt-4 aspect-video overflow-hidden rounded-3xl border border-border bg-muted">
+            <iframe
+              src={p.tourUrl}
+              title={`Tour of ${p.title}`}
+              className="h-full w-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        </section>
+      )}
+
       <section className="container-page mt-14 grid lg:grid-cols-3 gap-10">
         <div className="lg:col-span-2">
           <div className="grid grid-cols-3 gap-3">
@@ -67,6 +95,19 @@ export function PropertyDetailPage({
             <Fact icon={<Bath size={18} />} label="Bathrooms" value={p.baths.toString()} />
             <Fact icon={<Ruler size={18} />} label="Area" value={`${p.area} ft²`} />
           </div>
+
+          {n && (
+            <div className="mt-10 rounded-3xl border border-border p-6">
+              <h2 className="font-display text-2xl font-semibold">Neighborhood Index — {n.name}</h2>
+              {n.summary && <p className="mt-2 text-muted-foreground">{n.summary}</p>}
+              <div className="mt-6 grid sm:grid-cols-2 gap-3">
+                <ScoreBar label="Safety" value={n.safety} />
+                <ScoreBar label="Power" value={n.power} />
+                <ScoreBar label="Water" value={n.water} />
+                <ScoreBar label="Affordability" value={n.affordability} />
+              </div>
+            </div>
+          )}
 
           <h2 className="mt-12 font-display text-3xl font-semibold">About this home</h2>
           <p className="mt-4 text-muted-foreground text-lg leading-relaxed">{p.description}</p>
@@ -83,14 +124,24 @@ export function PropertyDetailPage({
         </div>
 
         <aside className="lg:sticky lg:top-8 h-max rounded-3xl border border-border p-6 shadow-soft bg-card">
-          <div className="flex items-center gap-2 text-success">
-            <ShieldCheck size={18} /> <span className="text-sm font-semibold">Verified listing</span>
+          <div className={`flex items-center gap-2 ${verified ? "text-success" : "text-muted-foreground"}`}>
+            {verified ? <ShieldCheck size={18} /> : <ShieldAlert size={18} />}
+            <span className="text-sm font-semibold">
+              {verified ? "Verified listing" : "Verification pending / unverified"}
+            </span>
           </div>
           <p className="mt-4 font-display text-3xl font-semibold text-primary">
             {p.currency}{p.price.toLocaleString()}
             {p.type === "For Rent" && <span className="text-base text-muted-foreground font-normal"> /mo</span>}
           </p>
-          <PropertyActions propertyId={p.id} ownerId={p.ownerId} propertyTitle={p.title} />
+          <PropertyActions
+            propertyId={p.id}
+            ownerId={p.ownerId}
+            propertyTitle={p.title}
+            propertyType={p.type}
+            monthlyPrice={p.price}
+            initiallySaved={saved}
+          />
         </aside>
       </section>
 
@@ -117,11 +168,25 @@ export function PropertyDetailPage({
   );
 }
 
+function ScoreBar({ label, value }: { label: string; value: number }) {
+  return (
+    <div>
+      <div className="flex justify-between text-sm mb-1">
+        <span>{label}</span>
+        <span className="font-semibold">{value}</span>
+      </div>
+      <div className="h-2 rounded-full bg-muted overflow-hidden">
+        <div className="h-full rounded-full bg-primary" style={{ width: `${value}%` }} />
+      </div>
+    </div>
+  );
+}
+
 function Fact({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="rounded-2xl bg-muted p-5">
-      <div className="grid place-items-center w-9 h-9 rounded-lg bg-background text-primary">{icon}</div>
-      <p className="mt-3 text-xs uppercase tracking-widest text-muted-foreground">{label}</p>
+    <div className="rounded-2xl border border-border p-4 text-center">
+      <div className="mx-auto grid place-items-center w-9 h-9 rounded-xl bg-primary/10 text-primary">{icon}</div>
+      <p className="mt-2 text-xs uppercase tracking-widest text-muted-foreground">{label}</p>
       <p className="mt-1 font-display text-xl font-semibold">{value}</p>
     </div>
   );

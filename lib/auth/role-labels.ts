@@ -7,6 +7,7 @@ export function roleLabel(role: Role): string {
     LANDLORD: "Landlord",
     AGENT: "Agent",
     ARTISAN: "Artisan",
+    ADMIN: "Admin",
   };
   return labels[role];
 }

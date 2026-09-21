@@ -13,6 +13,7 @@ enum Role {
   LANDLORD
   AGENT
   ARTISAN
+  ADMIN
 }
 
 enum PropertyType {
@@ -29,9 +30,68 @@ enum PropertyCategory {
   PENTHOUSE
 }
 
+enum VerificationStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
 enum BookingStatus {
   PENDING
   APPROVED
+  CANCELLED
+}
+
+enum BookingKind {
+  TOUR
+  PURCHASE_INTEREST
+}
+
+enum SkillBadge {
+  NONE
+  BRONZE
+  SILVER
+  GOLD
+}
+
+enum LeaseStatus {
+  DRAFT
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum EscrowStatus {
+  HELD
+  RELEASED
+  REFUNDED
+}
+
+enum EscrowPurpose {
+  RENT
+  ARTISAN
+  MOVE_IN
+}
+
+enum JobUrgency {
+  NORMAL
+  EMERGENCY
+}
+
+enum JobStatus {
+  REQUESTED
+  QUOTED
+  ACCEPTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum MoveInStatus {
+  OPEN
+  IN_PROGRESS
+  DONE
   CANCELLED
 }
 
@@ -46,13 +106,22 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts       Account[]
-  sessions       Session[]
-  properties     Property[]      @relation("PropertyOwner")
-  bookings       Booking[]
-  sentMessages   Message[]       @relation("SentMessages")
-  receivedMessages Message[]     @relation("ReceivedMessages")
-  serviceProfile ServiceProfile?
+  accounts           Account[]
+  sessions           Session[]
+  properties         Property[]      @relation("PropertyOwner")
+  bookings           Booking[]
+  sentMessages       Message[]       @relation("SentMessages")
+  receivedMessages   Message[]       @relation("ReceivedMessages")
+  serviceProfile     ServiceProfile?
+  leasesAsRenter     Lease[]         @relation("LeaseRenter")
+  leasesAsLandlord   Lease[]         @relation("LeaseLandlord")
+  escrowPayments     EscrowPayment[] @relation("EscrowPayer")
+  jobsAsCustomer     ServiceJob[]    @relation("JobCustomer")
+  jobsAsArtisan      ServiceJob[]    @relation("JobArtisan")
+  reviewsAuthored    Review[]        @relation("ReviewAuthor")
+  reviewsReceived    Review[]        @relation("ReviewTarget")
+  savedProperties    SavedProperty[]
+  moveInRequests     MoveInRequest[]
 }
 
 model Account {
@@ -91,28 +160,53 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-model Property {
-  id          String           @id
-  title       String
-  location    String
-  price       Int
-  currency    String           @default("$")
-  type        PropertyType
-  category    PropertyCategory
-  beds        Int
-  baths       Int
-  area        Int
-  image       String
-  featured    Boolean          @default(false)
-  description String           @db.Text
-  amenities   String[]
-  ownerId     String
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+model Neighborhood {
+  id            String   @id @default(cuid())
+  name          String
+  slug          String   @unique
+  safety        Int
+  power         Int
+  water         Int
+  affordability Int
+  summary       String?  @db.Text
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  owner    User      @relation("PropertyOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-  bookings Booking[]
-  messages Message[]
+  properties Property[]
+}
+
+model Property {
+  id                 String             @id
+  title              String
+  location           String
+  price              Int
+  currency           String             @default("$")
+  type               PropertyType
+  category           PropertyCategory
+  beds               Int
+  baths              Int
+  area               Int
+  image              String
+  featured           Boolean            @default(false)
+  description        String             @db.Text
+  amenities          String[]
+  ownerId            String
+  verificationStatus VerificationStatus @default(UNVERIFIED)
+  verifiedAt         DateTime?
+  tourUrl            String?
+  neighborhoodId     String?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  owner         User            @relation("PropertyOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  neighborhood  Neighborhood?   @relation(fields: [neighborhoodId], references: [id], onDelete: SetNull)
+  bookings      Booking[]
+  messages      Message[]
+  leases        Lease[]
+  serviceJobs   ServiceJob[]
+  reviews       Review[]
+  savedBy       SavedProperty[]
+  moveInRequests MoveInRequest[]
 }
 
 model Booking {
@@ -120,6 +214,7 @@ model Booking {
   propertyId    String
   userId        String
   preferredDate DateTime
+  kind          BookingKind   @default(TOUR)
   status        BookingStatus @default(PENDING)
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
@@ -149,13 +244,142 @@ model Message {
 }
 
 model ServiceProfile {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  trade     String
-  bio       String   @db.Text
-  verified  Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String             @id @default(cuid())
+  userId           String             @unique
+  trade            String
+  bio              String             @db.Text
+  verified         Boolean            @default(false)
+  verificationStatus VerificationStatus @default(UNVERIFIED)
+  skillBadge       SkillBadge         @default(NONE)
+  available        Boolean            @default(true)
+  hourlyRate       Int                @default(50)
+  serviceArea      String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Lease {
+  id          String      @id @default(cuid())
+  propertyId  String
+  renterId    String
+  landlordId  String
+  startDate   DateTime
+  endDate     DateTime
+  monthlyRent Int
+  status      LeaseStatus @default(DRAFT)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  property       Property         @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  renter         User             @relation("LeaseRenter", fields: [renterId], references: [id], onDelete: Cascade)
+  landlord       User             @relation("LeaseLandlord", fields: [landlordId], references: [id], onDelete: Cascade)
+  escrowPayments EscrowPayment[]
+  moveInRequests MoveInRequest[]
+
+  @@index([renterId])
+  @@index([landlordId])
+  @@index([propertyId])
+}
+
+model EscrowPayment {
+  id           String        @id @default(cuid())
+  amount       Int
+  status       EscrowStatus  @default(HELD)
+  purpose      EscrowPurpose
+  payerId      String
+  leaseId      String?
+  serviceJobId String?
+  note         String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  releasedAt   DateTime?
+  refundedAt   DateTime?
+
+  payer      User        @relation("EscrowPayer", fields: [payerId], references: [id], onDelete: Cascade)
+  lease      Lease?      @relation(fields: [leaseId], references: [id], onDelete: SetNull)
+  serviceJob ServiceJob? @relation(fields: [serviceJobId], references: [id], onDelete: SetNull)
+
+  @@index([payerId])
+  @@index([leaseId])
+  @@index([serviceJobId])
+}
+
+model ServiceJob {
+  id            String     @id @default(cuid())
+  customerId    String
+  artisanId     String
+  propertyId    String?
+  description   String     @db.Text
+  urgency       JobUrgency @default(NORMAL)
+  status        JobStatus  @default(REQUESTED)
+  priceEstimate Int?
+  etaMinutes    Int?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  completedAt   DateTime?
+
+  customer       User            @relation("JobCustomer", fields: [customerId], references: [id], onDelete: Cascade)
+  artisan        User            @relation("JobArtisan", fields: [artisanId], references: [id], onDelete: Cascade)
+  property       Property?       @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  escrowPayments EscrowPayment[]
+  reviews        Review[]
+
+  @@index([customerId])
+  @@index([artisanId])
+}
+
+model Review {
+  id           String   @id @default(cuid())
+  authorId     String
+  targetUserId String?
+  propertyId   String?
+  serviceJobId String?
+  rating       Int
+  comment      String   @db.Text
+  createdAt    DateTime @default(now())
+
+  author     User        @relation("ReviewAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  targetUser User?       @relation("ReviewTarget", fields: [targetUserId], references: [id], onDelete: SetNull)
+  property   Property?   @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  serviceJob ServiceJob? @relation(fields: [serviceJobId], references: [id], onDelete: SetNull)
+
+  @@index([authorId])
+  @@index([targetUserId])
+  @@index([propertyId])
+}
+
+model SavedProperty {
+  id         String   @id @default(cuid())
+  userId     String
+  propertyId String
+  createdAt  DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, propertyId])
+  @@index([userId])
+}
+
+model MoveInRequest {
+  id          String       @id @default(cuid())
+  userId      String
+  propertyId  String
+  leaseId     String?
+  moving      Boolean      @default(false)
+  furnishing  Boolean      @default(false)
+  utilities   Boolean      @default(false)
+  status      MoveInStatus @default(OPEN)
+  notes       String?      @db.Text
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  lease    Lease?   @relation(fields: [leaseId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([propertyId])
 }

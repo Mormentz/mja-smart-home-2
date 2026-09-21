@@ -1,10 +1,10 @@
 "use server";
 
+import type { PropertyCategory, PropertyType } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import type { PropertyCategory, PropertyType } from "@prisma/client";
 
 const listingSchema = z.object({
   id: z.string().min(1).regex(/^[a-z0-9-]+$/, "ID must be lowercase letters, numbers, and hyphens"),
@@ -21,6 +21,8 @@ const listingSchema = z.object({
   featured: z.boolean().optional(),
   description: z.string().min(10),
   amenities: z.array(z.string()).default([]),
+  tourUrl: z.string().url().optional().or(z.literal("")),
+  neighborhoodId: z.string().optional().or(z.literal("")),
 });
 
 export async function getOwnerListings() {
@@ -31,6 +33,7 @@ export async function getOwnerListings() {
 
   return prisma.property.findMany({
     where: { ownerId: session.user.id },
+    include: { neighborhood: true },
     orderBy: { createdAt: "desc" },
   });
 }
@@ -55,12 +58,16 @@ export async function createListing(data: z.infer<typeof listingSchema>) {
     return { error: "A listing with this ID already exists" };
   }
 
+  const { tourUrl, neighborhoodId, ...rest } = parsed.data;
+
   await prisma.property.create({
     data: {
-      ...parsed.data,
+      ...rest,
       type: parsed.data.type as PropertyType,
       category: parsed.data.category as PropertyCategory,
       ownerId: session.user.id,
+      tourUrl: tourUrl || null,
+      neighborhoodId: neighborhoodId || null,
     },
   });
 
@@ -69,7 +76,10 @@ export async function createListing(data: z.infer<typeof listingSchema>) {
   return { success: true };
 }
 
-export async function updateListing(id: string, data: Partial<z.infer<typeof listingSchema>>) {
+export async function updateListing(
+  id: string,
+  data: Partial<z.infer<typeof listingSchema>>,
+) {
   const session = await auth();
   if (!session?.user?.id) {
     return { error: "Unauthorized" };
@@ -96,6 +106,8 @@ export async function updateListing(id: string, data: Partial<z.infer<typeof lis
       featured: data.featured,
       description: data.description,
       amenities: data.amenities,
+      tourUrl: data.tourUrl === "" ? null : data.tourUrl,
+      neighborhoodId: data.neighborhoodId === "" ? null : data.neighborhoodId,
     },
   });
 

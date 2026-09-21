@@ -1,5 +1,5 @@
 import type { StaticImageData } from "next/image";
-import type { PropertyCategory, PropertyType } from "@prisma/client";
+import type { PropertyCategory, PropertyType, VerificationStatus } from "@prisma/client";
 import p1 from "@/assets/property-1.jpg";
 import p2 from "@/assets/property-2.jpg";
 import p3 from "@/assets/property-3.jpg";
@@ -8,6 +8,17 @@ import p5 from "@/assets/property-5.jpg";
 import p6 from "@/assets/property-6.jpg";
 import { prisma } from "@/lib/prisma";
 import { SEED_PROPERTIES } from "@/lib/seed-data";
+
+export type NeighborhoodScore = {
+  id: string;
+  name: string;
+  slug: string;
+  safety: number;
+  power: number;
+  water: number;
+  affordability: number;
+  summary: string | null;
+};
 
 export type Property = {
   id: string;
@@ -25,6 +36,9 @@ export type Property = {
   description: string;
   amenities: string[];
   ownerId?: string;
+  verificationStatus?: VerificationStatus;
+  tourUrl?: string | null;
+  neighborhood?: NeighborhoodScore | null;
 };
 
 const IMAGE_MAP: Record<string, StaticImageData> = {
@@ -70,6 +84,9 @@ function mapDbProperty(record: {
   description: string;
   amenities: string[];
   ownerId: string;
+  verificationStatus?: VerificationStatus;
+  tourUrl?: string | null;
+  neighborhood?: NeighborhoodScore | null;
 }): Property {
   return {
     id: record.id,
@@ -87,6 +104,9 @@ function mapDbProperty(record: {
     description: record.description,
     amenities: record.amenities,
     ownerId: record.ownerId,
+    verificationStatus: record.verificationStatus ?? "UNVERIFIED",
+    tourUrl: record.tourUrl ?? null,
+    neighborhood: record.neighborhood ?? null,
   };
 }
 
@@ -116,16 +136,24 @@ const staticProperties: Property[] = SEED_PROPERTIES.map((p) => ({
   featured: "featured" in p ? p.featured : undefined,
   description: p.description,
   amenities: [...p.amenities],
+  verificationStatus: p.verificationStatus,
+  tourUrl: p.tourUrl,
 }));
 
 /** @deprecated Use getProperties() instead */
 export const properties: Property[] = staticProperties;
 
-export async function getProperties(): Promise<Property[]> {
+export async function getProperties(opts?: { verifiedOnly?: boolean }): Promise<Property[]> {
   try {
-    const records = await prisma.property.findMany({ orderBy: { createdAt: "desc" } });
+    const records = await prisma.property.findMany({
+      where: opts?.verifiedOnly ? { verificationStatus: "VERIFIED" } : undefined,
+      include: { neighborhood: true },
+      orderBy: { createdAt: "desc" },
+    });
     if (records.length === 0) {
-      return staticProperties;
+      return staticProperties.filter((p) =>
+        opts?.verifiedOnly ? p.verificationStatus === "VERIFIED" : true,
+      );
     }
     return records.map(mapDbProperty);
   } catch {
@@ -135,7 +163,10 @@ export async function getProperties(): Promise<Property[]> {
 
 export async function getProperty(id: string): Promise<Property | undefined> {
   try {
-    const record = await prisma.property.findUnique({ where: { id } });
+    const record = await prisma.property.findUnique({
+      where: { id },
+      include: { neighborhood: true },
+    });
     if (record) {
       return mapDbProperty(record);
     }

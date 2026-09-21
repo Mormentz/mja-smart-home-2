@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { BookingKind } from "@prisma/client";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -8,17 +9,36 @@ import { prisma } from "@/lib/prisma";
 const bookingSchema = z.object({
   propertyId: z.string().min(1),
   preferredDate: z.string().min(1),
+  kind: z.enum(["TOUR", "PURCHASE_INTEREST"]).default("TOUR"),
 });
 
-export async function createBooking(data: { propertyId: string; preferredDate: string }) {
+export async function createBooking(data: {
+  propertyId: string;
+  preferredDate: string;
+  kind?: "TOUR" | "PURCHASE_INTEREST";
+}) {
   const session = await auth();
   if (!session?.user?.id) {
-    return { error: "You must be signed in to book a tour" };
+    return { error: "You must be signed in to book" };
   }
 
-  const parsed = bookingSchema.safeParse(data);
+  if (!["RENTER", "BUYER"].includes(session.user.role)) {
+    return { error: "Only renters and buyers can create booking requests" };
+  }
+
+  const parsed = bookingSchema.safeParse({
+    ...data,
+    kind: data.kind ?? (session.user.role === "BUYER" ? "PURCHASE_INTEREST" : "TOUR"),
+  });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid booking details" };
+  }
+
+  if (session.user.role === "BUYER" && parsed.data.kind === "TOUR") {
+    // buyers may still tour
+  }
+  if (session.user.role === "RENTER" && parsed.data.kind === "PURCHASE_INTEREST") {
+    return { error: "Purchase interest is for buyers" };
   }
 
   const preferredDate = new Date(parsed.data.preferredDate);
@@ -31,11 +51,16 @@ export async function createBooking(data: { propertyId: string; preferredDate: s
     return { error: "Property not found" };
   }
 
+  if (parsed.data.kind === "PURCHASE_INTEREST" && property.type !== "FOR_SALE") {
+    return { error: "Purchase interest is only for sale listings" };
+  }
+
   await prisma.booking.create({
     data: {
       propertyId: parsed.data.propertyId,
       userId: session.user.id,
       preferredDate,
+      kind: parsed.data.kind as BookingKind,
     },
   });
 

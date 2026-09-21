@@ -41,8 +41,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${manrope.variable} ${plusJakarta.variable} h-full`}>
-      <body className="min-h-full antialiased">
+    <html lang="en" className={`${manrope.variable} ${plusJakarta.variable} h-full`} suppressHydrationWarning>
+      <body className="min-h-full antialiased" suppressHydrationWarning>
         <AuthSessionProvider>{children}</AuthSessionProvider>
         <Toaster />
       </body>

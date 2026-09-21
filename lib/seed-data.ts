@@ -1,8 +1,57 @@
+export const SEED_NEIGHBORHOODS = [
+  {
+    slug: "ikoyi",
+    name: "Ikoyi",
+    safety: 88,
+    power: 82,
+    water: 90,
+    affordability: 42,
+    summary: "Premium residential pocket with strong security and reliable utilities.",
+  },
+  {
+    slug: "lekki-phase-1",
+    name: "Lekki Phase 1",
+    safety: 78,
+    power: 70,
+    water: 75,
+    affordability: 55,
+    summary: "Lifestyle corridor with cafés, coworking, and growing residential blocks.",
+  },
+  {
+    slug: "victoria-island",
+    name: "Victoria Island",
+    safety: 80,
+    power: 85,
+    water: 88,
+    affordability: 38,
+    summary: "Business and waterfront living with strong infrastructure scores.",
+  },
+  {
+    slug: "elegushi",
+    name: "Elegushi Beach",
+    safety: 72,
+    power: 65,
+    water: 70,
+    affordability: 48,
+    summary: "Coastal stretch popular for villas; power reliability varies by estate.",
+  },
+  {
+    slug: "yaba",
+    name: "Yaba Creative District",
+    safety: 74,
+    power: 68,
+    water: 72,
+    affordability: 70,
+    summary: "Creative hub with loft stock and improving neighborhood services.",
+  },
+] as const;
+
 export const SEED_PROPERTIES = [
   {
     id: "riverstone-house",
     title: "Riverstone Modern House",
     location: "Ikoyi, Lagos",
+    neighborhoodSlug: "ikoyi",
     price: 480000,
     currency: "$",
     type: "FOR_SALE" as const,
@@ -12,6 +61,8 @@ export const SEED_PROPERTIES = [
     area: 3200,
     image: "property-1.jpg",
     featured: true,
+    verificationStatus: "VERIFIED" as const,
+    tourUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
     description:
       "A striking contemporary home clad in dark stone and warm wood, framed by ambient landscape lighting. Open-plan living, floor-to-ceiling glazing, and a private garden bring the outside in.",
     amenities: ["Smart lock", "EV charger", "Solar backup", "Garden", "Underfloor heating", "Home office"],
@@ -20,6 +71,7 @@ export const SEED_PROPERTIES = [
     id: "verdant-heights",
     title: "Verdant Heights Apartments",
     location: "Lekki Phase 1, Lagos",
+    neighborhoodSlug: "lekki-phase-1",
     price: 2100,
     currency: "$",
     type: "FOR_RENT" as const,
@@ -28,6 +80,8 @@ export const SEED_PROPERTIES = [
     baths: 2,
     area: 1150,
     image: "property-2.jpg",
+    verificationStatus: "VERIFIED" as const,
+    tourUrl: null,
     description:
       "Balcony-forward apartments spilling with greenery in the heart of the city. Cross-ventilated, sun-lit, and steps from cafés and coworking.",
     amenities: ["Balcony garden", "Gym", "24/7 security", "Fibre internet", "Parking"],
@@ -36,6 +90,7 @@ export const SEED_PROPERTIES = [
     id: "brownstone-classic",
     title: "Heritage Brownstone",
     location: "Old Ikoyi",
+    neighborhoodSlug: "ikoyi",
     price: 720000,
     currency: "$",
     type: "FOR_SALE" as const,
@@ -44,6 +99,8 @@ export const SEED_PROPERTIES = [
     baths: 4,
     area: 4100,
     image: "property-3.jpg",
+    verificationStatus: "PENDING" as const,
+    tourUrl: null,
     description:
       "A restored brownstone on a tree-lined avenue. Wrought-iron balconies, original mouldings, and a chef's kitchen designed for entertaining.",
     amenities: ["Original hardwood", "Wine cellar", "Roof terrace", "Chef's kitchen"],
@@ -52,6 +109,7 @@ export const SEED_PROPERTIES = [
     id: "skyline-penthouse",
     title: "Skyline Penthouse",
     location: "Victoria Island",
+    neighborhoodSlug: "victoria-island",
     price: 4800,
     currency: "$",
     type: "FOR_RENT" as const,
@@ -61,6 +119,8 @@ export const SEED_PROPERTIES = [
     area: 2400,
     image: "property-4.jpg",
     featured: true,
+    verificationStatus: "VERIFIED" as const,
+    tourUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
     description:
       "Panoramic city views through 12ft glass. Marble floors, a private lift, and concierge included. The address that says everything without saying anything.",
     amenities: ["Private lift", "Concierge", "Panoramic view", "Marble finishes", "Home cinema"],
@@ -69,6 +129,7 @@ export const SEED_PROPERTIES = [
     id: "coastline-villa",
     title: "Coastline Infinity Villa",
     location: "Elegushi Beach",
+    neighborhoodSlug: "elegushi",
     price: 1250000,
     currency: "$",
     type: "FOR_SALE" as const,
@@ -77,6 +138,8 @@ export const SEED_PROPERTIES = [
     baths: 6,
     area: 6800,
     image: "property-5.jpg",
+    verificationStatus: "UNVERIFIED" as const,
+    tourUrl: null,
     description:
       "A sun-soaked retreat with an infinity pool that meets the horizon. Palm-lined grounds, indoor–outdoor living, and a private boardwalk to the beach.",
     amenities: ["Infinity pool", "Beach access", "Staff quarters", "Outdoor kitchen"],
@@ -85,6 +148,7 @@ export const SEED_PROPERTIES = [
     id: "atelier-loft",
     title: "Atelier Loft",
     location: "Yaba Creative District",
+    neighborhoodSlug: "yaba",
     price: 1650,
     currency: "$",
     type: "FOR_RENT" as const,
@@ -93,6 +157,8 @@ export const SEED_PROPERTIES = [
     baths: 1,
     area: 980,
     image: "property-6.jpg",
+    verificationStatus: "VERIFIED" as const,
+    tourUrl: null,
     description:
       "Exposed brick, timber trusses, and a cathedral skylight. A working artist's loft with modern comforts and a strong point of view.",
     amenities: ["Cathedral ceiling", "Skylight", "Loft office", "Freight lift"],
@@ -100,6 +166,7 @@ export const SEED_PROPERTIES = [
 ] as const;
 
 export const DEMO_USERS = [
+  { email: "admin@demo.com", name: "Ava Admin", role: "ADMIN" as const },
   { email: "renter@demo.com", name: "Ada Renter", role: "RENTER" as const },
   { email: "buyer@demo.com", name: "Ben Buyer", role: "BUYER" as const },
   { email: "landlord@demo.com", name: "Lara Landlord", role: "LANDLORD" as const },

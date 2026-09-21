@@ -21,6 +21,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 const nav = [
   { href: "/", label: "Home", exact: true },
   { href: "/properties", label: "Properties" },
+  { href: "/artisans", label: "Artisans" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
 ] as const;

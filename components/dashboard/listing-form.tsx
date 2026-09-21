@@ -1,7 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { createListing, deleteListing } from "@/lib/actions/listings";
+import {
+  createListing,
+  deleteListing,
+  updateListing,
+} from "@/lib/actions/listings";
+import { requestPropertyVerification } from "@/lib/actions/verification";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,17 +20,51 @@ type Listing = {
   price: number;
   type: string;
   category: string;
+  beds: number;
+  baths: number;
+  area: number;
+  image: string;
+  description: string;
+  amenities: string[];
+  verificationStatus: string;
+  tourUrl: string | null;
+  neighborhoodId: string | null;
 };
 
-export function ListingsManager({ listings }: { listings: Listing[] }) {
+type NeighborhoodOption = { id: string; name: string };
+
+export function ListingsManager({
+  listings,
+  neighborhoods,
+}: {
+  listings: Listing[];
+  neighborhoods: NeighborhoodOption[];
+}) {
   const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState<Listing | null>(null);
 
   return (
     <div className="space-y-6">
       <div className="flex justify-end">
-        <Button onClick={() => setShowForm((v) => !v)}>{showForm ? "Cancel" : "Add listing"}</Button>
+        <Button
+          onClick={() => {
+            setEditing(null);
+            setShowForm((v) => !v);
+          }}
+        >
+          {showForm && !editing ? "Cancel" : "Add listing"}
+        </Button>
       </div>
-      {showForm && <ListingForm onSuccess={() => setShowForm(false)} />}
+      {showForm && (
+        <ListingForm
+          neighborhoods={neighborhoods}
+          initial={editing}
+          onSuccess={() => {
+            setShowForm(false);
+            setEditing(null);
+          }}
+        />
+      )}
       {listings.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-border p-10 text-center text-muted-foreground">
           No listings yet. Add your first property.
@@ -33,7 +72,14 @@ export function ListingsManager({ listings }: { listings: Listing[] }) {
       ) : (
         <div className="space-y-4">
           {listings.map((listing) => (
-            <ListingRow key={listing.id} listing={listing} />
+            <ListingRow
+              key={listing.id}
+              listing={listing}
+              onEdit={() => {
+                setEditing(listing);
+                setShowForm(true);
+              }}
+            />
           ))}
         </div>
       )}
@@ -41,7 +87,7 @@ export function ListingsManager({ listings }: { listings: Listing[] }) {
   );
 }
 
-function ListingRow({ listing }: { listing: Listing }) {
+function ListingRow({ listing, onEdit }: { listing: Listing; onEdit: () => void }) {
   async function handleDelete() {
     const result = await deleteListing(listing.id);
     if (result.error) {
@@ -49,6 +95,15 @@ function ListingRow({ listing }: { listing: Listing }) {
       return;
     }
     toast.success("Listing deleted");
+  }
+
+  async function handleVerify() {
+    const result = await requestPropertyVerification(listing.id);
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success("Verification requested");
   }
 
   return (
@@ -59,16 +114,38 @@ function ListingRow({ listing }: { listing: Listing }) {
         <p className="mt-1 text-sm">
           ${listing.price.toLocaleString()} · {listing.type.replace("_", " ")} · {listing.category}
         </p>
+        <p className="mt-1 text-xs uppercase tracking-wide text-muted-foreground">
+          Status: {listing.verificationStatus}
+        </p>
       </div>
-      <Button variant="outline" size="sm" onClick={handleDelete}>
-        Delete
-      </Button>
+      <div className="flex flex-wrap gap-2">
+        {listing.verificationStatus !== "VERIFIED" && listing.verificationStatus !== "PENDING" && (
+          <Button variant="secondary" size="sm" onClick={handleVerify}>
+            Request verification
+          </Button>
+        )}
+        <Button variant="outline" size="sm" onClick={onEdit}>
+          Edit
+        </Button>
+        <Button variant="outline" size="sm" onClick={handleDelete}>
+          Delete
+        </Button>
+      </div>
     </div>
   );
 }
 
-function ListingForm({ onSuccess }: { onSuccess: () => void }) {
+function ListingForm({
+  onSuccess,
+  neighborhoods,
+  initial,
+}: {
+  onSuccess: () => void;
+  neighborhoods: NeighborhoodOption[];
+  initial: Listing | null;
+}) {
   const [loading, setLoading] = useState(false);
+  const isEdit = Boolean(initial);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -79,28 +156,40 @@ function ListingForm({ onSuccess }: { onSuccess: () => void }) {
       .map((a) => a.trim())
       .filter(Boolean);
 
-    const result = await createListing({
+    const payload = {
       id: String(form.get("id")),
       title: String(form.get("title")),
       location: String(form.get("location")),
       price: Number(form.get("price")),
       currency: "$",
       type: String(form.get("type")) as "FOR_SALE" | "FOR_RENT",
-      category: String(form.get("category")) as "HOUSE" | "APARTMENT" | "VILLA" | "LOFT" | "TOWNHOUSE" | "PENTHOUSE",
+      category: String(form.get("category")) as
+        | "HOUSE"
+        | "APARTMENT"
+        | "VILLA"
+        | "LOFT"
+        | "TOWNHOUSE"
+        | "PENTHOUSE",
       beds: Number(form.get("beds")),
       baths: Number(form.get("baths")),
       area: Number(form.get("area")),
       image: String(form.get("image")),
       description: String(form.get("description")),
       amenities,
-    });
+      tourUrl: String(form.get("tourUrl") ?? ""),
+      neighborhoodId: String(form.get("neighborhoodId") ?? ""),
+    };
+
+    const result = isEdit
+      ? await updateListing(initial!.id, payload)
+      : await createListing(payload);
 
     setLoading(false);
     if (result.error) {
       toast.error(result.error);
       return;
     }
-    toast.success("Listing created");
+    toast.success(isEdit ? "Listing updated" : "Listing created");
     onSuccess();
   }
 
@@ -109,30 +198,30 @@ function ListingForm({ onSuccess }: { onSuccess: () => void }) {
       <div className="grid sm:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="id">Listing ID (slug)</Label>
-          <Input id="id" name="id" placeholder="my-new-listing" required />
+          <Input id="id" name="id" placeholder="my-new-listing" defaultValue={initial?.id} required disabled={isEdit} />
         </div>
         <div className="space-y-2">
           <Label htmlFor="title">Title</Label>
-          <Input id="title" name="title" required />
+          <Input id="title" name="title" defaultValue={initial?.title} required />
         </div>
         <div className="space-y-2">
           <Label htmlFor="location">Location</Label>
-          <Input id="location" name="location" required />
+          <Input id="location" name="location" defaultValue={initial?.location} required />
         </div>
         <div className="space-y-2">
           <Label htmlFor="price">Price</Label>
-          <Input id="price" name="price" type="number" required />
+          <Input id="price" name="price" type="number" defaultValue={initial?.price} required />
         </div>
         <div className="space-y-2">
           <Label htmlFor="type">Type</Label>
-          <select id="type" name="type" className="w-full h-10 rounded-md border border-input px-3" required>
+          <select id="type" name="type" className="w-full h-10 rounded-md border border-input px-3" defaultValue={initial?.type ?? "FOR_SALE"} required>
             <option value="FOR_SALE">For Sale</option>
             <option value="FOR_RENT">For Rent</option>
           </select>
         </div>
         <div className="space-y-2">
           <Label htmlFor="category">Category</Label>
-          <select id="category" name="category" className="w-full h-10 rounded-md border border-input px-3" required>
+          <select id="category" name="category" className="w-full h-10 rounded-md border border-input px-3" defaultValue={initial?.category ?? "HOUSE"} required>
             <option value="HOUSE">House</option>
             <option value="APARTMENT">Apartment</option>
             <option value="VILLA">Villa</option>
@@ -143,31 +232,56 @@ function ListingForm({ onSuccess }: { onSuccess: () => void }) {
         </div>
         <div className="space-y-2">
           <Label htmlFor="beds">Beds</Label>
-          <Input id="beds" name="beds" type="number" required />
+          <Input id="beds" name="beds" type="number" defaultValue={initial?.beds ?? 2} required />
         </div>
         <div className="space-y-2">
           <Label htmlFor="baths">Baths</Label>
-          <Input id="baths" name="baths" type="number" required />
+          <Input id="baths" name="baths" type="number" defaultValue={initial?.baths ?? 2} required />
         </div>
         <div className="space-y-2">
           <Label htmlFor="area">Area (sq ft)</Label>
-          <Input id="area" name="area" type="number" required />
+          <Input id="area" name="area" type="number" defaultValue={initial?.area ?? 1000} required />
         </div>
         <div className="space-y-2">
           <Label htmlFor="image">Image key</Label>
-          <Input id="image" name="image" placeholder="property-1.jpg" required />
+          <Input id="image" name="image" placeholder="property-1.jpg" defaultValue={initial?.image ?? "property-1.jpg"} required />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="tourUrl">Virtual tour URL (embed)</Label>
+          <Input id="tourUrl" name="tourUrl" placeholder="https://..." defaultValue={initial?.tourUrl ?? ""} />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="neighborhoodId">Neighborhood</Label>
+          <select
+            id="neighborhoodId"
+            name="neighborhoodId"
+            className="w-full h-10 rounded-md border border-input px-3"
+            defaultValue={initial?.neighborhoodId ?? ""}
+          >
+            <option value="">None</option>
+            {neighborhoods.map((n) => (
+              <option key={n.id} value={n.id}>
+                {n.name}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
       <div className="space-y-2">
         <Label htmlFor="description">Description</Label>
-        <Textarea id="description" name="description" rows={4} required />
+        <Textarea id="description" name="description" rows={4} defaultValue={initial?.description} required />
       </div>
       <div className="space-y-2">
         <Label htmlFor="amenities">Amenities (comma-separated)</Label>
-        <Input id="amenities" name="amenities" placeholder="Gym, Parking, Garden" />
+        <Input
+          id="amenities"
+          name="amenities"
+          placeholder="Gym, Parking, Garden"
+          defaultValue={initial?.amenities?.join(", ") ?? ""}
+        />
       </div>
       <Button type="submit" disabled={loading}>
-        {loading ? "Creating..." : "Create listing"}
+        {loading ? "Saving..." : isEdit ? "Update listing" : "Create listing"}
       </Button>
     </form>
   );

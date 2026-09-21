@@ -43,11 +43,11 @@ function resolveImage(key: string) {
 }
 
 const trendChartConfig = {
-  value: { label: "Tour requests", color: "oklch(0.34 0.045 175)" },
+  value: { label: "Tour requests", color: "#19403d" },
 };
 
 const dayChartConfig = {
-  count: { label: "Activity", color: "oklch(0.34 0.045 175)" },
+  count: { label: "Activity", color: "#19403d" },
 };
 
 type DashboardOverviewProps = {
@@ -58,19 +58,35 @@ export function DashboardOverview({ data }: DashboardOverviewProps) {
   const [widgetOpen, setWidgetOpen] = useState(false);
   const { stats, role } = data;
   const isOwner = role === "LANDLORD" || role === "AGENT";
+  const isArtisan = role === "ARTISAN";
+  const isAdmin = role === "ADMIN";
 
-  const kpis = isOwner
+  const kpis = isAdmin
     ? [
-        { label: "Listing views", value: stats.propertyViews.toLocaleString(), trend: stats.propertyViewsTrend, icon: Eye },
-        { label: "Tour requests", value: stats.tourRequests.toLocaleString(), trend: stats.tourRequestsTrend, icon: Calendar },
+        { label: "Pending verifications", value: String(stats.pendingVerifications ?? 0), trend: stats.listingsTrend, icon: Home },
+        { label: "Verified listings", value: stats.listings.toLocaleString(), trend: stats.propertyViewsTrend, icon: Eye },
         { label: "Unread messages", value: stats.messages.toLocaleString(), trend: stats.messagesTrend, icon: MessageSquare },
+        { label: "Tour requests (platform)", value: stats.tourRequests.toLocaleString(), trend: stats.tourRequestsTrend, icon: Calendar },
+      ]
+    : isArtisan
+      ? [
+          { label: "Open jobs", value: String(stats.openJobs ?? 0), trend: stats.tourRequestsTrend, icon: Calendar },
+          { label: "Escrow held", value: `$${stats.escrowHeld ?? 0}`, trend: stats.propertyViewsTrend, icon: Eye },
+          { label: "Released earnings", value: `$${stats.escrowReleased ?? 0}`, trend: stats.listingsTrend, icon: Home },
+          { label: "Unread messages", value: stats.messages.toLocaleString(), trend: stats.messagesTrend, icon: MessageSquare },
+        ]
+    : isOwner
+    ? [
+        { label: "Listing reach", value: stats.propertyViews.toLocaleString(), trend: stats.propertyViewsTrend, icon: Eye },
+        { label: "Tour requests", value: stats.tourRequests.toLocaleString(), trend: stats.tourRequestsTrend, icon: Calendar },
+        { label: "Escrow held", value: `$${stats.escrowHeld ?? 0}`, trend: stats.messagesTrend, icon: MessageSquare },
         { label: "Active listings", value: stats.listings.toLocaleString(), trend: stats.listingsTrend, icon: Home },
       ]
     : [
-        { label: "Properties viewed", value: stats.propertyViews.toLocaleString(), trend: stats.propertyViewsTrend, icon: Eye },
-        { label: "Tour requests", value: stats.tourRequests.toLocaleString(), trend: stats.tourRequestsTrend, icon: Calendar },
+        { label: "Activity score", value: stats.propertyViews.toLocaleString(), trend: stats.propertyViewsTrend, icon: Eye },
+        { label: "Bookings", value: stats.tourRequests.toLocaleString(), trend: stats.tourRequestsTrend, icon: Calendar },
         { label: "Unread messages", value: stats.messages.toLocaleString(), trend: stats.messagesTrend, icon: MessageSquare },
-        { label: "Saved homes", value: "12", trend: 4.4, icon: Home },
+        { label: "Saved homes", value: String(stats.savedHomes ?? 0), trend: stats.listingsTrend, icon: Home },
       ];
 
   const totalTrend = data.bookingTrend.reduce((sum, d) => sum + d.value, 0);
@@ -256,24 +272,26 @@ export function DashboardOverview({ data }: DashboardOverviewProps) {
               <Sparkles size={18} className="text-primary" />
             </div>
             <div>
-              <p className="font-medium">HomeConnect AI</p>
-              <p className="text-xs text-muted-foreground">Your property assistant</p>
+              <p className="font-medium">Trust snapshot</p>
+              <p className="text-xs text-muted-foreground">Neighborhood & escrow status</p>
             </div>
           </div>
           <div className="mt-4 flex-1 rounded-xl bg-muted/40 p-4 text-sm text-muted-foreground leading-relaxed">
-            Ask about neighborhoods, tour scheduling, listing performance, or market trends in Lagos.
+            {data.trustSummary}
           </div>
-          <div className="mt-4 flex gap-2">
-            <input
-              placeholder="Ask me anything..."
-              className="flex-1 rounded-xl border border-border/60 bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/20"
-            />
-            <button
-              type="button"
-              className="rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground hover:brightness-105"
+          <div className="mt-4 grid gap-2">
+            <Link
+              href="/properties"
+              className="rounded-xl bg-primary px-4 py-2.5 text-center text-sm font-medium text-primary-foreground hover:brightness-105"
             >
-              Send
-            </button>
+              Browse verified homes
+            </Link>
+            <Link
+              href="/artisans"
+              className="rounded-xl border border-border px-4 py-2.5 text-center text-sm font-medium hover:bg-muted"
+            >
+              Artisan hub
+            </Link>
           </div>
         </div>
       </div>

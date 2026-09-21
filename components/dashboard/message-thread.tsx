@@ -1,37 +1,49 @@
 "use client";
 
-import { useState } from "react";
-import { markMessageRead, sendMessage } from "@/lib/actions/messages";
+import { useEffect, useMemo, useState } from "react";
+import { markThreadRead, sendMessage, type Conversation } from "@/lib/actions/messages";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
-type Message = {
-  id: string;
-  content: string;
-  createdAt: Date;
-  readAt: Date | null;
-  sender: { id: string; name: string | null; email: string };
-  recipient: { id: string; name: string | null; email: string };
-  property: { id: string; title: string } | null;
-};
-
-export function MessageList({
-  messages,
+export function ConversationInbox({
+  conversations,
   currentUserId,
 }: {
-  messages: Message[];
+  conversations: Conversation[];
   currentUserId: string;
 }) {
-  const [replyTo, setReplyTo] = useState<{ id: string; name: string } | null>(null);
+  const [activeKey, setActiveKey] = useState<string | null>(
+    conversations[0]
+      ? `${conversations[0].counterpartId}:${conversations[0].propertyId ?? "none"}`
+      : null,
+  );
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function handleReply(e: React.FormEvent) {
+  const active = useMemo(
+    () =>
+      conversations.find(
+        (c) => `${c.counterpartId}:${c.propertyId ?? "none"}` === activeKey,
+      ) ?? null,
+    [conversations, activeKey],
+  );
+
+  useEffect(() => {
+    if (!active) return;
+    void markThreadRead(active.counterpartId, active.propertyId);
+  }, [active]);
+
+  async function reply(e: React.FormEvent) {
     e.preventDefault();
-    if (!replyTo) return;
+    if (!active) return;
     setLoading(true);
-    const result = await sendMessage({ recipientId: replyTo.id, content });
+    const result = await sendMessage({
+      recipientId: active.counterpartId,
+      propertyId: active.propertyId ?? undefined,
+      content,
+    });
     setLoading(false);
     if (result.error) {
       toast.error(result.error);
@@ -39,14 +51,9 @@ export function MessageList({
     }
     toast.success("Message sent");
     setContent("");
-    setReplyTo(null);
   }
 
-  async function handleMarkRead(id: string) {
-    await markMessageRead(id);
-  }
-
-  if (messages.length === 0) {
+  if (conversations.length === 0) {
     return (
       <div className="rounded-3xl border border-dashed border-border p-10 text-center text-muted-foreground">
         No messages yet.
@@ -55,55 +62,74 @@ export function MessageList({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-4">
-        {messages.map((message) => {
-          const isIncoming = message.recipient.id === currentUserId;
-          const other = isIncoming ? message.sender : message.recipient;
+    <div className="grid lg:grid-cols-[280px_1fr] gap-4 min-h-[420px]">
+      <div className="rounded-2xl border border-border overflow-hidden">
+        {conversations.map((c) => {
+          const key = `${c.counterpartId}:${c.propertyId ?? "none"}`;
           return (
-            <div key={message.id} className="rounded-3xl border border-border bg-card p-5 shadow-soft">
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div>
-                  <p className="font-semibold">{isIncoming ? `From ${other.name ?? other.email}` : `To ${other.name ?? other.email}`}</p>
-                  {message.property && (
-                    <p className="text-sm text-muted-foreground">Re: {message.property.title}</p>
-                  )}
-                  <p className="mt-3 text-sm leading-relaxed">{message.content}</p>
-                  <p className="mt-2 text-xs text-muted-foreground">{new Date(message.createdAt).toLocaleString()}</p>
-                </div>
-                <div className="flex gap-2">
-                  {isIncoming && !message.readAt && (
-                    <Button size="sm" variant="outline" onClick={() => handleMarkRead(message.id)}>
-                      Mark read
-                    </Button>
-                  )}
-                  <Button
-                    size="sm"
-                    onClick={() => setReplyTo({ id: other.id, name: other.name ?? other.email })}
-                  >
-                    Reply
-                  </Button>
-                </div>
-              </div>
-            </div>
+            <button
+              key={key}
+              type="button"
+              onClick={() => setActiveKey(key)}
+              className={cn(
+                "w-full text-left px-4 py-3 border-b border-border transition",
+                activeKey === key ? "bg-primary/10" : "hover:bg-muted",
+              )}
+            >
+              <p className="font-medium text-sm truncate">{c.counterpartName}</p>
+              {c.propertyTitle && (
+                <p className="text-xs text-muted-foreground truncate">Re: {c.propertyTitle}</p>
+              )}
+              <p className="text-xs text-muted-foreground truncate mt-1">{c.lastMessage}</p>
+              {c.unread > 0 && (
+                <span className="mt-1 inline-block text-[10px] rounded-full bg-success text-success-foreground px-2 py-0.5">
+                  {c.unread} new
+                </span>
+              )}
+            </button>
           );
         })}
       </div>
 
-      {replyTo && (
-        <form onSubmit={handleReply} className="rounded-3xl border border-border bg-card p-5 space-y-3">
-          <p className="text-sm font-medium">Reply to {replyTo.name}</p>
-          <Textarea value={content} onChange={(e) => setContent(e.target.value)} rows={4} required />
-          <div className="flex gap-2">
-            <Button type="submit" disabled={loading}>
-              {loading ? "Sending..." : "Send reply"}
-            </Button>
-            <Button type="button" variant="outline" onClick={() => setReplyTo(null)}>
-              Cancel
-            </Button>
-          </div>
-        </form>
-      )}
+      <div className="rounded-2xl border border-border flex flex-col">
+        {active ? (
+          <>
+            <div className="border-b border-border px-4 py-3">
+              <p className="font-semibold">{active.counterpartName}</p>
+              {active.propertyTitle && (
+                <p className="text-xs text-muted-foreground">Re: {active.propertyTitle}</p>
+              )}
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 max-h-[360px]">
+              {active.messages.map((m) => {
+                const mine = m.senderId === currentUserId;
+                return (
+                  <div
+                    key={m.id}
+                    className={cn(
+                      "max-w-[80%] rounded-2xl px-4 py-2 text-sm",
+                      mine ? "ml-auto bg-primary text-primary-foreground" : "bg-muted",
+                    )}
+                  >
+                    <p>{m.content}</p>
+                    <p className={cn("text-[10px] mt-1", mine ? "opacity-80" : "text-muted-foreground")}>
+                      {new Date(m.createdAt).toLocaleString()}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+            <form onSubmit={reply} className="border-t border-border p-4 space-y-2">
+              <Textarea value={content} onChange={(e) => setContent(e.target.value)} rows={3} required />
+              <Button type="submit" disabled={loading}>
+                {loading ? "Sending..." : "Send"}
+              </Button>
+            </form>
+          </>
+        ) : (
+          <div className="p-10 text-center text-muted-foreground">Select a conversation</div>
+        )}
+      </div>
     </div>
   );
 }

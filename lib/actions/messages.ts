@@ -59,8 +59,75 @@ export async function getUserMessages() {
       recipient: { select: { id: true, name: true, email: true, role: true } },
       property: { select: { id: true, title: true } },
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: { createdAt: "asc" },
   });
+}
+
+export type Conversation = {
+  counterpartId: string;
+  counterpartName: string;
+  counterpartEmail: string;
+  propertyId?: string | null;
+  propertyTitle?: string | null;
+  lastMessage: string;
+  lastAt: Date;
+  unread: number;
+  messages: Awaited<ReturnType<typeof getUserMessages>>;
+};
+
+export async function getConversations(): Promise<Conversation[]> {
+  const session = await auth();
+  if (!session?.user?.id) return [];
+
+  const messages = await getUserMessages();
+  const map = new Map<string, Conversation>();
+
+  for (const m of messages) {
+    const counterpart = m.senderId === session.user.id ? m.recipient : m.sender;
+    const key = `${counterpart.id}:${m.propertyId ?? "none"}`;
+    const existing = map.get(key);
+    const unreadInc =
+      m.recipientId === session.user.id && !m.readAt ? 1 : 0;
+
+    if (!existing) {
+      map.set(key, {
+        counterpartId: counterpart.id,
+        counterpartName: counterpart.name ?? counterpart.email,
+        counterpartEmail: counterpart.email,
+        propertyId: m.propertyId,
+        propertyTitle: m.property?.title,
+        lastMessage: m.content,
+        lastAt: m.createdAt,
+        unread: unreadInc,
+        messages: [m],
+      });
+    } else {
+      existing.messages.push(m);
+      existing.lastMessage = m.content;
+      existing.lastAt = m.createdAt;
+      existing.unread += unreadInc;
+    }
+  }
+
+  return Array.from(map.values()).sort((a, b) => b.lastAt.getTime() - a.lastAt.getTime());
+}
+
+export async function markThreadRead(counterpartId: string, propertyId?: string | null) {
+  const session = await auth();
+  if (!session?.user?.id) return { error: "Unauthorized" };
+
+  await prisma.message.updateMany({
+    where: {
+      senderId: counterpartId,
+      recipientId: session.user.id,
+      propertyId: propertyId ?? null,
+      readAt: null,
+    },
+    data: { readAt: new Date() },
+  });
+
+  revalidatePath("/dashboard/messages");
+  return { success: true };
 }
 
 export async function markMessageRead(messageId: string) {
@@ -83,7 +150,13 @@ export async function markMessageRead(messageId: string) {
   return { success: true };
 }
 
-export async function updateServiceProfile(data: { trade: string; bio: string }) {
+export async function updateServiceProfile(data: {
+  trade: string;
+  bio: string;
+  available?: boolean;
+  hourlyRate?: number;
+  serviceArea?: string;
+}) {
   const session = await auth();
   if (!session?.user?.id) {
     return { error: "Unauthorized" };
@@ -101,11 +174,25 @@ export async function updateServiceProfile(data: { trade: string; bio: string })
 
   await prisma.serviceProfile.upsert({
     where: { userId: session.user.id },
-    update: { trade, bio },
-    create: { userId: session.user.id, trade, bio },
+    update: {
+      trade,
+      bio,
+      available: data.available,
+      hourlyRate: data.hourlyRate,
+      serviceArea: data.serviceArea,
+    },
+    create: {
+      userId: session.user.id,
+      trade,
+      bio,
+      available: data.available ?? true,
+      hourlyRate: data.hourlyRate ?? 50,
+      serviceArea: data.serviceArea,
+    },
   });
 
   revalidatePath("/dashboard/services");
+  revalidatePath("/artisans");
   return { success: true };
 }
 

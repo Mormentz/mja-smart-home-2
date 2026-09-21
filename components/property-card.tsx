@@ -29,9 +29,21 @@ export function PropertyCard({ p, delay = 0 }: { p: Property; delay?: number }) 
           <span className="absolute top-4 left-4 px-3 py-1.5 rounded-full text-xs font-semibold bg-background/95 backdrop-blur">
             {p.type}
           </span>
-          <span className="absolute top-4 right-4 px-3 py-1.5 rounded-full text-xs font-semibold bg-ink/80 text-ink-foreground backdrop-blur">
-            {p.category}
-          </span>
+          <div className="absolute top-4 right-4 flex flex-col items-end gap-1">
+            <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-ink/80 text-ink-foreground backdrop-blur">
+              {p.category}
+            </span>
+            {p.verificationStatus === "VERIFIED" && (
+              <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-secondary text-secondary-foreground">
+                Verified
+              </span>
+            )}
+            {p.neighborhood && (
+              <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-background/95">
+                Safety {p.neighborhood.safety}
+              </span>
+            )}
+          </div>
         </div>
         <div className="p-6">
           <div className="flex items-center gap-1 text-muted-foreground text-sm">

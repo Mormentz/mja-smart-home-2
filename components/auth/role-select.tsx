@@ -12,6 +12,7 @@ const roleDescriptions: Record<Role, string> = {
   LANDLORD: "Manage your property listings",
   AGENT: "Represent listings and clients",
   ARTISAN: "Offer verified home services",
+  ADMIN: "Verify listings and artisans",
 };
 
 type RoleSelectProps = {

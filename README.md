@@ -48,9 +48,9 @@ Auth uses **Auth.js (NextAuth v5)** with email/password credentials and optional
 | `/signup` | Create account with role selection |
 | `/dashboard` | Role-based dashboard (protected) |
 
-**Demo accounts** (after seeding): `renter@demo.com`, `buyer@demo.com`, `landlord@demo.com`, `agent@demo.com`, `artisan@demo.com` — password: `password123`
+**Demo accounts** (after seeding): `admin@demo.com`, `renter@demo.com`, `buyer@demo.com`, `landlord@demo.com`, `agent@demo.com`, `artisan@demo.com` — password: `password123`
 
-**Roles:** Renter, Buyer, Landlord, Agent, Artisan — each gets tailored dashboard navigation.
+**Roles:** Admin, Renter, Buyer, Landlord, Agent, Artisan — each gets tailored dashboard navigation.
 
 ## Scripts
 

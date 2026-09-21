@@ -8,6 +8,7 @@ type Booking = {
   id: string;
   preferredDate: Date;
   status: string;
+  kind?: string;
   property: { title: string; location: string };
   user?: { name: string | null; email: string };
 };
@@ -42,6 +43,9 @@ export function BookingList({ bookings, isOwner }: { bookings: Booking[]; isOwne
                 Preferred date:{" "}
                 <span className="font-medium">{new Date(booking.preferredDate).toLocaleDateString()}</span>
               </p>
+              {booking.kind && (
+                <p className="mt-1 text-xs uppercase tracking-wide text-muted-foreground">{booking.kind.replace("_", " ")}</p>
+              )}
               {isOwner && booking.user && (
                 <p className="mt-1 text-sm text-muted-foreground">
                   Requested by {booking.user.name ?? booking.user.email}

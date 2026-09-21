@@ -56,12 +56,13 @@
   --ink-foreground: oklch(0.98 0.003 250);
   --cream: oklch(0.985 0.005 90);
 
-  --primary: oklch(0.34 0.045 175);
-  --primary-light: oklch(0.55 0.06 170);
-  --primary-foreground: oklch(0.985 0.005 90);
+  /* Brand: #19403D primary, #E7AD6D secondary */
+  --primary: #19403d;
+  --primary-light: #2a5c57;
+  --primary-foreground: #f8faf9;
 
-  --secondary: oklch(0.79 0.09 65);
-  --secondary-foreground: oklch(0.2 0.02 260);
+  --secondary: #e7ad6d;
+  --secondary-foreground: #1a2a28;
 
   --success: oklch(0.75 0.16 158);
   --success-foreground: oklch(0.15 0.02 260);
@@ -91,10 +92,10 @@
   --card-foreground: oklch(0.98 0.003 250);
   --popover: oklch(0.24 0.025 260);
   --popover-foreground: oklch(0.98 0.003 250);
-  --primary: oklch(0.79 0.09 65);
-  --primary-foreground: oklch(0.19 0.025 260);
-  --secondary: oklch(0.34 0.045 175);
-  --secondary-foreground: oklch(0.98 0.003 250);
+  --primary: #e7ad6d;
+  --primary-foreground: #19403d;
+  --secondary: #19403d;
+  --secondary-foreground: #f8faf9;
   --muted: oklch(0.28 0.02 260);
   --muted-foreground: oklch(0.72 0.02 250);
   --accent: oklch(0.28 0.02 260);

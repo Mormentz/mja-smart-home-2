@@ -3,9 +3,11 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Calendar } from "lucide-react";
+import { Calendar, Heart } from "lucide-react";
 import { createBooking } from "@/lib/actions/bookings";
 import { sendMessage } from "@/lib/actions/messages";
+import { createLeaseDraft, activateLeaseWithEscrow } from "@/lib/actions/leases";
+import { toggleSavedProperty } from "@/lib/actions/saved-properties";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -13,21 +15,36 @@ type PropertyActionsProps = {
   propertyId: string;
   ownerId?: string;
   propertyTitle: string;
+  propertyType: "For Sale" | "For Rent";
+  monthlyPrice: number;
+  initiallySaved?: boolean;
 };
 
-export function PropertyActions({ propertyId, ownerId, propertyTitle }: PropertyActionsProps) {
+export function PropertyActions({
+  propertyId,
+  ownerId,
+  propertyTitle,
+  propertyType,
+  monthlyPrice,
+  initiallySaved = false,
+}: PropertyActionsProps) {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [preferredDate, setPreferredDate] = useState("");
   const [message, setMessage] = useState(`Hi, I'm interested in ${propertyTitle}.`);
   const [showMessage, setShowMessage] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [saved, setSaved] = useState(initiallySaved);
+
+  const role = session?.user?.role;
+  const isBuyer = role === "BUYER";
+  const isRenter = role === "RENTER";
 
   function requireLogin(callbackUrl: string) {
     router.push(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
   }
 
-  async function handleBookTour() {
+  async function handleBook() {
     if (status !== "authenticated") {
       requireLogin(`/properties/${propertyId}`);
       return;
@@ -37,13 +54,58 @@ export function PropertyActions({ propertyId, ownerId, propertyTitle }: Property
       return;
     }
     setLoading(true);
-    const result = await createBooking({ propertyId, preferredDate });
+    const kind = isBuyer && propertyType === "For Sale" ? "PURCHASE_INTEREST" : "TOUR";
+    const result = await createBooking({ propertyId, preferredDate, kind });
     setLoading(false);
     if (result.error) {
       toast.error(result.error);
       return;
     }
-    toast.success("Tour request submitted!");
+    toast.success(kind === "PURCHASE_INTEREST" ? "Purchase interest submitted!" : "Tour request submitted!");
+  }
+
+  async function handleStartLease() {
+    if (status !== "authenticated") {
+      requireLogin(`/properties/${propertyId}`);
+      return;
+    }
+    setLoading(true);
+    const start = new Date();
+    const end = new Date();
+    end.setFullYear(end.getFullYear() + 1);
+    const draft = await createLeaseDraft({
+      propertyId,
+      startDate: start.toISOString(),
+      endDate: end.toISOString(),
+      monthlyRent: monthlyPrice,
+    });
+    if (draft.error || !draft.leaseId) {
+      setLoading(false);
+      toast.error(draft.error ?? "Could not create lease");
+      return;
+    }
+    const funded = await activateLeaseWithEscrow(draft.leaseId);
+    setLoading(false);
+    if (funded.error) {
+      toast.error(funded.error);
+      return;
+    }
+    toast.success("Lease activated — first month held in escrow");
+    router.push("/dashboard/leases");
+  }
+
+  async function handleSave() {
+    if (status !== "authenticated") {
+      requireLogin(`/properties/${propertyId}`);
+      return;
+    }
+    const result = await toggleSavedProperty(propertyId);
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
+    setSaved(Boolean(result.saved));
+    toast.success(result.saved ? "Saved to your homes" : "Removed from saved");
   }
 
   async function handleMessage() {
@@ -73,6 +135,10 @@ export function PropertyActions({ propertyId, ownerId, propertyTitle }: Property
     toast.success("Message sent!");
     setShowMessage(false);
   }
+
+  const primaryLabel = isBuyer && propertyType === "For Sale"
+    ? "Express purchase interest"
+    : "Book a tour";
 
   return (
     <>
@@ -113,12 +179,32 @@ export function PropertyActions({ propertyId, ownerId, propertyTitle }: Property
       </div>
       <button
         type="button"
-        onClick={handleBookTour}
+        onClick={handleBook}
         disabled={loading}
         className="mt-6 w-full py-4 rounded-2xl bg-primary text-primary-foreground font-semibold hover:brightness-110 transition disabled:opacity-50"
       >
-        {loading ? "Submitting..." : session ? "Book a tour" : "Sign in to book a tour"}
+        {loading ? "Submitting..." : session ? primaryLabel : "Sign in to continue"}
       </button>
+      {isRenter && propertyType === "For Rent" && (
+        <button
+          type="button"
+          onClick={handleStartLease}
+          disabled={loading}
+          className="mt-2 w-full py-4 rounded-2xl bg-secondary text-secondary-foreground font-semibold hover:brightness-105 transition disabled:opacity-50"
+        >
+          Secure rent with escrow
+        </button>
+      )}
+      {(isRenter || isBuyer || !session) && (
+        <button
+          type="button"
+          onClick={handleSave}
+          className="mt-2 w-full py-4 rounded-2xl border border-border font-semibold hover:bg-muted transition inline-flex items-center justify-center gap-2"
+        >
+          <Heart size={16} className={saved ? "fill-primary text-primary" : ""} />
+          {saved ? "Saved" : "Save home"}
+        </button>
+      )}
       <button
         type="button"
         onClick={() => {
