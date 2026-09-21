@@ -1,10 +1,13 @@
 import type { StaticImageData } from "next/image";
+import type { PropertyCategory, PropertyType } from "@prisma/client";
 import p1 from "@/assets/property-1.jpg";
 import p2 from "@/assets/property-2.jpg";
 import p3 from "@/assets/property-3.jpg";
 import p4 from "@/assets/property-4.jpg";
 import p5 from "@/assets/property-5.jpg";
 import p6 from "@/assets/property-6.jpg";
+import { prisma } from "@/lib/prisma";
+import { SEED_PROPERTIES } from "@/lib/seed-data";
 
 export type Property = {
   id: string;
@@ -21,107 +24,128 @@ export type Property = {
   featured?: boolean;
   description: string;
   amenities: string[];
+  ownerId?: string;
 };
 
-export const properties: Property[] = [
-  {
-    id: "riverstone-house",
-    title: "Riverstone Modern House",
-    location: "Ikoyi, Lagos",
-    price: 480000,
-    currency: "$",
-    type: "For Sale",
-    category: "House",
-    beds: 4,
-    baths: 3,
-    area: 3200,
-    image: p1,
-    featured: true,
-    description:
-      "A striking contemporary home clad in dark stone and warm wood, framed by ambient landscape lighting. Open-plan living, floor-to-ceiling glazing, and a private garden bring the outside in.",
-    amenities: ["Smart lock", "EV charger", "Solar backup", "Garden", "Underfloor heating", "Home office"],
-  },
-  {
-    id: "verdant-heights",
-    title: "Verdant Heights Apartments",
-    location: "Lekki Phase 1, Lagos",
-    price: 2100,
-    currency: "$",
-    type: "For Rent",
-    category: "Apartment",
-    beds: 2,
-    baths: 2,
-    area: 1150,
-    image: p2,
-    description:
-      "Balcony-forward apartments spilling with greenery in the heart of the city. Cross-ventilated, sun-lit, and steps from cafés and coworking.",
-    amenities: ["Balcony garden", "Gym", "24/7 security", "Fibre internet", "Parking"],
-  },
-  {
-    id: "brownstone-classic",
-    title: "Heritage Brownstone",
-    location: "Old Ikoyi",
-    price: 720000,
-    currency: "$",
-    type: "For Sale",
-    category: "Townhouse",
-    beds: 5,
-    baths: 4,
-    area: 4100,
-    image: p3,
-    description:
-      "A restored brownstone on a tree-lined avenue. Wrought-iron balconies, original mouldings, and a chef's kitchen designed for entertaining.",
-    amenities: ["Original hardwood", "Wine cellar", "Roof terrace", "Chef's kitchen"],
-  },
-  {
-    id: "skyline-penthouse",
-    title: "Skyline Penthouse",
-    location: "Victoria Island",
-    price: 4800,
-    currency: "$",
-    type: "For Rent",
-    category: "Penthouse",
-    beds: 3,
-    baths: 3,
-    area: 2400,
-    image: p4,
-    featured: true,
-    description:
-      "Panoramic city views through 12ft glass. Marble floors, a private lift, and concierge included. The address that says everything without saying anything.",
-    amenities: ["Private lift", "Concierge", "Panoramic view", "Marble finishes", "Home cinema"],
-  },
-  {
-    id: "coastline-villa",
-    title: "Coastline Infinity Villa",
-    location: "Elegushi Beach",
-    price: 1250000,
-    currency: "$",
-    type: "For Sale",
-    category: "Villa",
-    beds: 6,
-    baths: 6,
-    area: 6800,
-    image: p5,
-    description:
-      "A sun-soaked retreat with an infinity pool that meets the horizon. Palm-lined grounds, indoor–outdoor living, and a private boardwalk to the beach.",
-    amenities: ["Infinity pool", "Beach access", "Staff quarters", "Outdoor kitchen"],
-  },
-  {
-    id: "atelier-loft",
-    title: "Atelier Loft",
-    location: "Yaba Creative District",
-    price: 1650,
-    currency: "$",
-    type: "For Rent",
-    category: "Loft",
-    beds: 1,
-    baths: 1,
-    area: 980,
-    image: p6,
-    description:
-      "Exposed brick, timber trusses, and a cathedral skylight. A working artist's loft with modern comforts and a strong point of view.",
-    amenities: ["Cathedral ceiling", "Skylight", "Loft office", "Freight lift"],
-  },
-];
+const IMAGE_MAP: Record<string, StaticImageData> = {
+  "property-1.jpg": p1,
+  "property-2.jpg": p2,
+  "property-3.jpg": p3,
+  "property-4.jpg": p4,
+  "property-5.jpg": p5,
+  "property-6.jpg": p6,
+};
 
-export const getProperty = (id: string) => properties.find((p) => p.id === id);
+const TYPE_TO_DISPLAY: Record<PropertyType, Property["type"]> = {
+  FOR_SALE: "For Sale",
+  FOR_RENT: "For Rent",
+};
+
+const CATEGORY_TO_DISPLAY: Record<PropertyCategory, Property["category"]> = {
+  HOUSE: "House",
+  APARTMENT: "Apartment",
+  VILLA: "Villa",
+  LOFT: "Loft",
+  TOWNHOUSE: "Townhouse",
+  PENTHOUSE: "Penthouse",
+};
+
+function resolveImage(imageKey: string): string | StaticImageData {
+  return IMAGE_MAP[imageKey] ?? imageKey;
+}
+
+function mapDbProperty(record: {
+  id: string;
+  title: string;
+  location: string;
+  price: number;
+  currency: string;
+  type: PropertyType;
+  category: PropertyCategory;
+  beds: number;
+  baths: number;
+  area: number;
+  image: string;
+  featured: boolean;
+  description: string;
+  amenities: string[];
+  ownerId: string;
+}): Property {
+  return {
+    id: record.id,
+    title: record.title,
+    location: record.location,
+    price: record.price,
+    currency: record.currency,
+    type: TYPE_TO_DISPLAY[record.type],
+    category: CATEGORY_TO_DISPLAY[record.category],
+    beds: record.beds,
+    baths: record.baths,
+    area: record.area,
+    image: resolveImage(record.image),
+    featured: record.featured,
+    description: record.description,
+    amenities: record.amenities,
+    ownerId: record.ownerId,
+  };
+}
+
+const staticProperties: Property[] = SEED_PROPERTIES.map((p) => ({
+  id: p.id,
+  title: p.title,
+  location: p.location,
+  price: p.price,
+  currency: p.currency,
+  type: p.type === "FOR_SALE" ? "For Sale" : "For Rent",
+  category:
+    p.category === "HOUSE"
+      ? "House"
+      : p.category === "APARTMENT"
+        ? "Apartment"
+        : p.category === "VILLA"
+          ? "Villa"
+          : p.category === "LOFT"
+            ? "Loft"
+            : p.category === "TOWNHOUSE"
+              ? "Townhouse"
+              : "Penthouse",
+  beds: p.beds,
+  baths: p.baths,
+  area: p.area,
+  image: resolveImage(p.image),
+  featured: "featured" in p ? p.featured : undefined,
+  description: p.description,
+  amenities: [...p.amenities],
+}));
+
+/** @deprecated Use getProperties() instead */
+export const properties: Property[] = staticProperties;
+
+export async function getProperties(): Promise<Property[]> {
+  try {
+    const records = await prisma.property.findMany({ orderBy: { createdAt: "desc" } });
+    if (records.length === 0) {
+      return staticProperties;
+    }
+    return records.map(mapDbProperty);
+  } catch {
+    return staticProperties;
+  }
+}
+
+export async function getProperty(id: string): Promise<Property | undefined> {
+  try {
+    const record = await prisma.property.findUnique({ where: { id } });
+    if (record) {
+      return mapDbProperty(record);
+    }
+  } catch {
+    // fall through to static data
+  }
+  return staticProperties.find((p) => p.id === id);
+}
+
+export async function getPropertyIds(): Promise<string[]> {
+  const items = await getProperties();
+  return items.map((p) => p.id);
+}

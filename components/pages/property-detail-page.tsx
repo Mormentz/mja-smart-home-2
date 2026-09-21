@@ -2,16 +2,21 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowLeft, Bath, BedDouble, MapPin, Ruler, ShieldCheck, Check, Calendar } from "lucide-react";
+import { ArrowLeft, Bath, BedDouble, MapPin, Ruler, ShieldCheck, Check } from "lucide-react";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
+import { PropertyActions } from "@/components/property-actions";
 import type { Property } from "@/lib/properties";
-import { properties } from "@/lib/properties";
 import { imageSrc } from "@/lib/utils";
 import detailKitchen from "@/assets/detail-kitchen.jpg";
 
-export function PropertyDetailPage({ property: p }: { property: Property }) {
-  const similar = properties.filter((x) => x.id !== p.id).slice(0, 3);
+export function PropertyDetailPage({
+  property: p,
+  similar,
+}: {
+  property: Property;
+  similar: Property[];
+}) {
 
   return (
     <div className="min-h-screen bg-background">
@@ -85,29 +90,7 @@ export function PropertyDetailPage({ property: p }: { property: Property }) {
             {p.currency}{p.price.toLocaleString()}
             {p.type === "For Rent" && <span className="text-base text-muted-foreground font-normal"> /mo</span>}
           </p>
-          <div className="mt-5 space-y-3">
-            <label className="block">
-              <span className="text-xs uppercase tracking-widest text-muted-foreground">Preferred date</span>
-              <div className="mt-1 flex items-center gap-2 rounded-2xl border border-border px-4 py-3">
-                <Calendar size={16} className="text-muted-foreground" />
-                <input type="date" className="w-full bg-transparent outline-none" />
-              </div>
-            </label>
-            <label className="block">
-              <span className="text-xs uppercase tracking-widest text-muted-foreground">Name</span>
-              <input className="mt-1 w-full rounded-2xl border border-border px-4 py-3 bg-transparent outline-none" placeholder="Your name" />
-            </label>
-            <label className="block">
-              <span className="text-xs uppercase tracking-widest text-muted-foreground">Email</span>
-              <input type="email" className="mt-1 w-full rounded-2xl border border-border px-4 py-3 bg-transparent outline-none" placeholder="you@email.com" />
-            </label>
-          </div>
-          <button className="mt-6 w-full py-4 rounded-2xl bg-primary text-primary-foreground font-semibold hover:brightness-110 transition">
-            Book a tour
-          </button>
-          <button className="mt-2 w-full py-4 rounded-2xl border border-border font-semibold hover:bg-muted transition">
-            Message agent
-          </button>
+          <PropertyActions propertyId={p.id} ownerId={p.ownerId} propertyTitle={p.title} />
         </aside>
       </section>
 

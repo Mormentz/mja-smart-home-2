@@ -1,24 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+This is the **HomeConnect** housing marketplace built with [Next.js](https://nextjs.org).
 
 ## Getting Started
 
-First, run the development server:
+### 1. Environment
+
+Copy `.env.example` to `.env.local` and set:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/homeconnect?schema=public"
+AUTH_SECRET="<run: openssl rand -base64 32>"
+AUTH_URL="http://localhost:3000"
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Database
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Start PostgreSQL (Docker example):
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+docker run -d --name homeconnect-db \
+  -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_DB=homeconnect \
+  -p 5432:5432 postgres:16
+```
+
+Push schema and seed demo data:
+
+```bash
+pnpm db:push
+pnpm db:seed
+```
+
+### 3. Dev server
+
+```bash
+pnpm dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+## Auth & Roles
+
+Auth uses **Auth.js (NextAuth v5)** with email/password credentials and optional Google OAuth.
+
+| Route | Purpose |
+|-------|---------|
+| `/login` | Sign in |
+| `/signup` | Create account with role selection |
+| `/dashboard` | Role-based dashboard (protected) |
+
+**Demo accounts** (after seeding): `renter@demo.com`, `buyer@demo.com`, `landlord@demo.com`, `agent@demo.com`, `artisan@demo.com` — password: `password123`
+
+**Roles:** Renter, Buyer, Landlord, Agent, Artisan — each gets tailored dashboard navigation.
+
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `pnpm dev` | Start dev server |
+| `pnpm db:push` | Push Prisma schema to DB |
+| `pnpm db:seed` | Seed demo users & properties |
+| `pnpm db:studio` | Open Prisma Studio |
 
 ## Learn More
 

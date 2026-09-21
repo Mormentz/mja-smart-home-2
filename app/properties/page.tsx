@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import PropertiesPage from "@/components/pages/properties-page";
+import { getProperties } from "@/lib/properties";
 
 export const metadata: Metadata = {
   title: "Properties — HomeConnect",
@@ -10,6 +11,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default function Page() {
-  return <PropertiesPage />;
+export default async function Page() {
+  const properties = await getProperties();
+  return <PropertiesPage properties={properties} />;
 }

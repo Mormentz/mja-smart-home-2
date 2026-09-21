@@ -6,11 +6,11 @@ import { Search, SlidersHorizontal } from "lucide-react";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { PropertyCard } from "@/components/property-card";
-import { properties } from "@/lib/properties";
+import type { Property } from "@/lib/properties";
 
 const filters = ["All", "For Sale", "For Rent", "House", "Apartment", "Villa", "Loft", "Penthouse", "Townhouse"] as const;
 
-export default function PropertiesPage() {
+export default function PropertiesPage({ properties }: { properties: Property[] }) {
   const [active, setActive] = useState<(typeof filters)[number]>("All");
   const [q, setQ] = useState("");
 
@@ -26,7 +26,7 @@ export default function PropertiesPage() {
         p.location.toLowerCase().includes(q.toLowerCase());
       return matchFilter && matchQ;
     });
-  }, [active, q]);
+  }, [active, q, properties]);
 
   return (
     <div className="min-h-screen bg-background">

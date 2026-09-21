@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Manrope, Plus_Jakarta_Sans } from "next/font/google";
+import { AuthSessionProvider } from "@/components/providers/session-provider";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -40,7 +42,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${manrope.variable} ${plusJakarta.variable} h-full`}>
-      <body className="min-h-full antialiased">{children}</body>
+      <body className="min-h-full antialiased">
+        <AuthSessionProvider>{children}</AuthSessionProvider>
+        <Toaster />
+      </body>
     </html>
   );
 }
