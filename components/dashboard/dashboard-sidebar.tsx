@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { Role } from "@prisma/client";
 import {
-  BarChart3,
   Calendar,
   FileText,
   Heart,
@@ -15,6 +14,7 @@ import {
   Settings,
   ShieldCheck,
   Truck,
+  Users,
   Wrench,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -29,23 +29,29 @@ type NavItem = {
 };
 
 const mainNav: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: <LayoutDashboard size={18} />, roles: ["RENTER", "BUYER", "LANDLORD", "AGENT", "ARTISAN", "ADMIN"] },
-  { href: "/dashboard/admin", label: "Verification", icon: <ShieldCheck size={18} />, roles: ["ADMIN"] },
-  { href: "/dashboard/bookings", label: "Bookings", icon: <Calendar size={18} />, roles: ["RENTER", "BUYER", "LANDLORD", "AGENT"] },
-  { href: "/dashboard/leases", label: "Leases & escrow", icon: <FileText size={18} />, roles: ["RENTER", "LANDLORD", "AGENT"] },
-  { href: "/dashboard/saved", label: "Saved homes", icon: <Heart size={18} />, roles: ["RENTER", "BUYER"] },
-  { href: "/dashboard/move-in", label: "Move-in", icon: <Truck size={18} />, roles: ["RENTER"] },
-  { href: "/dashboard/listings", label: "Listings", icon: <Home size={18} />, roles: ["LANDLORD", "AGENT"] },
-  { href: "/dashboard/jobs", label: "Jobs", icon: <Wrench size={18} />, roles: ["RENTER", "BUYER", "ARTISAN"] },
-  { href: "/properties", label: "Properties", icon: <BarChart3 size={18} />, roles: ["RENTER", "BUYER", "LANDLORD", "AGENT", "ARTISAN", "ADMIN"] },
-  { href: "/artisans", label: "Artisans", icon: <Wrench size={18} />, roles: ["RENTER", "BUYER", "LANDLORD", "AGENT", "ADMIN"] },
-  { href: "/dashboard/messages", label: "Messages", icon: <MessageSquare size={18} />, roles: ["RENTER", "BUYER", "LANDLORD", "AGENT", "ARTISAN", "ADMIN"] },
+  { href: "/dashboard", label: "Dashboard", icon: <LayoutDashboard size={18} />, roles: ["USER", "AGENT", "ARTISAN", "ADMIN"] },
+  { href: "/dashboard/admin", label: "Overview", icon: <ShieldCheck size={18} />, roles: ["ADMIN"] },
+  { href: "/dashboard/admin/users", label: "Users", icon: <Users size={18} />, roles: ["ADMIN"] },
+  { href: "/dashboard/admin/artisans", label: "Artisans", icon: <Wrench size={18} />, roles: ["ADMIN"] },
+  { href: "/dashboard/admin/properties", label: "Properties", icon: <Home size={18} />, roles: ["ADMIN"] },
+  { href: "/dashboard/admin/verifications", label: "Verifications", icon: <ShieldCheck size={18} />, roles: ["ADMIN"] },
+  { href: "/dashboard/admin/content", label: "Content", icon: <FileText size={18} />, roles: ["ADMIN"] },
+  { href: "/dashboard/admin/amenities", label: "Amenities", icon: <Home size={18} />, roles: ["ADMIN"] },
+  { href: "/dashboard/bookings", label: "Bookings", icon: <Calendar size={18} />, roles: ["USER", "AGENT"] },
+  { href: "/dashboard/leases", label: "Leases & escrow", icon: <FileText size={18} />, roles: ["USER", "AGENT"] },
+  { href: "/dashboard/saved", label: "Saved homes", icon: <Heart size={18} />, roles: ["USER"] },
+  { href: "/dashboard/move-in", label: "Move-in", icon: <Truck size={18} />, roles: ["USER"] },
+  { href: "/dashboard/listings", label: "Listings", icon: <Home size={18} />, roles: ["AGENT"] },
+  { href: "/dashboard/jobs", label: "Jobs", icon: <Wrench size={18} />, roles: ["USER", "AGENT", "ARTISAN"] },
+  { href: "/properties", label: "Browse homes", icon: <Home size={18} />, roles: ["USER", "AGENT", "ARTISAN"] },
+  { href: "/artisans", label: "Browse artisans", icon: <Wrench size={18} />, roles: ["USER", "AGENT"] },
+  { href: "/dashboard/messages", label: "Messages", icon: <MessageSquare size={18} />, roles: ["USER", "AGENT", "ARTISAN", "ADMIN"] },
   { href: "/dashboard/services", label: "Services", icon: <Wrench size={18} />, roles: ["ARTISAN"] },
 ];
 
 const secondaryNav: NavItem[] = [
-  { href: "/dashboard/settings", label: "Settings", icon: <Settings size={18} />, roles: ["RENTER", "BUYER", "LANDLORD", "AGENT", "ARTISAN", "ADMIN"] },
-  { href: "/contact", label: "Help & Support", icon: <HelpCircle size={18} />, roles: ["RENTER", "BUYER", "LANDLORD", "AGENT", "ARTISAN", "ADMIN"] },
+  { href: "/dashboard/settings", label: "Settings", icon: <Settings size={18} />, roles: ["USER", "AGENT", "ARTISAN", "ADMIN"] },
+  { href: "/contact", label: "Help & Support", icon: <HelpCircle size={18} />, roles: ["USER", "AGENT", "ARTISAN"] },
 ];
 
 type DashboardSidebarProps = {
@@ -72,7 +78,11 @@ export function DashboardSidebar({ role, pendingBookings = 0, unreadMessages = 0
 
   const secondary = secondaryNav.filter((item) => item.roles.includes(role));
 
-  const isActive = (href: string) => (href === "/dashboard" ? pathname === href : pathname.startsWith(href));
+  const isActive = (href: string) => {
+    if (href === "/dashboard") return pathname === href;
+    if (href === "/dashboard/admin") return pathname === "/dashboard/admin";
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
 
   return (
     <aside className={cn("flex w-[260px] shrink-0 flex-col border-r border-border/60 bg-card", className)}>
@@ -91,9 +101,9 @@ export function DashboardSidebar({ role, pendingBookings = 0, unreadMessages = 0
             key={item.href}
             href={item.href}
             className={cn(
-              "flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+              "flex items-center justify-between gap-2 rounded-xl px-3 py-2 text-sm font-medium transition-colors",
               isActive(item.href)
-                ? "bg-primary/10 text-primary"
+                ? "bg-primary/10 text-primary border-l-2 border-primary pl-[10px]"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
@@ -116,7 +126,7 @@ export function DashboardSidebar({ role, pendingBookings = 0, unreadMessages = 0
             key={item.href}
             href={item.href}
             className={cn(
-              "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+              "flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors",
               isActive(item.href)
                 ? "bg-primary/10 text-primary"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground",
@@ -126,19 +136,6 @@ export function DashboardSidebar({ role, pendingBookings = 0, unreadMessages = 0
             {item.label}
           </Link>
         ))}
-
-        <div className="mt-3 rounded-2xl bg-gradient-to-br from-primary/15 via-primary/5 to-transparent border border-primary/15 p-4">
-          <p className="text-sm font-semibold text-primary">Trust & Neighborhood Index</p>
-          <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">
-            Verified homes, escrow rent, and artisan badges — AI match coming later.
-          </p>
-          <Link
-            href="/properties"
-            className="mt-3 inline-flex w-full items-center justify-center rounded-xl bg-primary py-2 text-xs font-semibold text-primary-foreground hover:brightness-105 transition"
-          >
-            Explore verified homes
-          </Link>
-        </div>
       </div>
     </aside>
   );

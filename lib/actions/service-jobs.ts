@@ -17,8 +17,8 @@ const createJobSchema = z.object({
 export async function createServiceJob(data: z.infer<typeof createJobSchema>) {
   const session = await auth();
   if (!session?.user?.id) return { error: "Unauthorized" };
-  if (!["RENTER", "BUYER"].includes(session.user.role)) {
-    return { error: "Only renters and buyers can book artisans" };
+  if (!["USER", "AGENT"].includes(session.user.role)) {
+    return { error: "Only users and agents can book artisans" };
   }
 
   const parsed = createJobSchema.safeParse(data);
@@ -157,7 +157,14 @@ export async function listArtisans(opts?: { availableOnly?: boolean }) {
   return prisma.user.findMany({
     where: {
       role: "ARTISAN",
-      serviceProfile: opts?.availableOnly ? { available: true } : { isNot: null },
+      active: true,
+      kycStatus: "VERIFIED",
+      serviceProfile: {
+        is: {
+          verificationStatus: "VERIFIED",
+          ...(opts?.availableOnly ? { available: true } : {}),
+        },
+      },
     },
     include: {
       serviceProfile: true,

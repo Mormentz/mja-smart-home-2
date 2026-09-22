@@ -8,8 +8,8 @@ import { prisma } from "@/lib/prisma";
 export async function requestPropertyVerification(propertyId: string) {
   const session = await auth();
   if (!session?.user?.id) return { error: "Unauthorized" };
-  if (!["LANDLORD", "AGENT"].includes(session.user.role)) {
-    return { error: "Only landlords and agents can request verification" };
+  if (session.user.role !== "AGENT") {
+    return { error: "Only agents can request verification" };
   }
 
   const property = await prisma.property.findUnique({ where: { id: propertyId } });

@@ -72,7 +72,7 @@ export async function getEscrowForUser() {
   const session = await auth();
   if (!session?.user?.id) return [];
 
-  if (["LANDLORD", "AGENT"].includes(session.user.role)) {
+  if (["AGENT"].includes(session.user.role)) {
     return prisma.escrowPayment.findMany({
       where: {
         OR: [

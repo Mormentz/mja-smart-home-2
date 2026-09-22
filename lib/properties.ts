@@ -32,6 +32,7 @@ export type Property = {
   baths: number;
   area: number;
   image: string | StaticImageData;
+  images: (string | StaticImageData)[];
   featured?: boolean;
   description: string;
   amenities: string[];
@@ -64,8 +65,18 @@ const CATEGORY_TO_DISPLAY: Record<PropertyCategory, Property["category"]> = {
   PENTHOUSE: "Penthouse",
 };
 
-function resolveImage(imageKey: string): string | StaticImageData {
-  return IMAGE_MAP[imageKey] ?? imageKey;
+/** Resolve seed keys, uploaded paths, or remote URLs to a usable src. */
+export function resolveImage(imageKey: string): string | StaticImageData {
+  if (!imageKey) return IMAGE_MAP["property-1.jpg"];
+  if (IMAGE_MAP[imageKey]) return IMAGE_MAP[imageKey];
+  if (imageKey.startsWith("/") || imageKey.startsWith("http://") || imageKey.startsWith("https://")) {
+    return imageKey;
+  }
+  return IMAGE_MAP["property-1.jpg"];
+}
+
+export function imageSrc(image: string | StaticImageData): string {
+  return typeof image === "string" ? image : image.src;
 }
 
 function mapDbProperty(record: {
@@ -80,6 +91,7 @@ function mapDbProperty(record: {
   baths: number;
   area: number;
   image: string;
+  images?: string[];
   featured: boolean;
   description: string;
   amenities: string[];
@@ -87,7 +99,18 @@ function mapDbProperty(record: {
   verificationStatus?: VerificationStatus;
   tourUrl?: string | null;
   neighborhood?: NeighborhoodScore | null;
+  propertyAmenities?: { amenity: { name: string; active: boolean } }[];
 }): Property {
+  const joined =
+    record.propertyAmenities
+      ?.filter((pa) => pa.amenity.active)
+      .map((pa) => pa.amenity.name) ?? [];
+  const amenityNames = joined.length > 0 ? joined : record.amenities;
+  const galleryKeys =
+    record.images && record.images.length > 0
+      ? record.images
+      : [record.image];
+
   return {
     id: record.id,
     title: record.title,
@@ -100,9 +123,10 @@ function mapDbProperty(record: {
     baths: record.baths,
     area: record.area,
     image: resolveImage(record.image),
+    images: galleryKeys.map(resolveImage),
     featured: record.featured,
     description: record.description,
-    amenities: record.amenities,
+    amenities: amenityNames,
     ownerId: record.ownerId,
     verificationStatus: record.verificationStatus ?? "UNVERIFIED",
     tourUrl: record.tourUrl ?? null,
@@ -133,7 +157,8 @@ const staticProperties: Property[] = SEED_PROPERTIES.map((p) => ({
   baths: p.baths,
   area: p.area,
   image: resolveImage(p.image),
-  featured: "featured" in p ? p.featured : undefined,
+  images: [...p.images].map(resolveImage),
+  featured: "featured" in p ? Boolean((p as { featured?: boolean }).featured) : undefined,
   description: p.description,
   amenities: [...p.amenities],
   verificationStatus: p.verificationStatus,
@@ -143,11 +168,16 @@ const staticProperties: Property[] = SEED_PROPERTIES.map((p) => ({
 /** @deprecated Use getProperties() instead */
 export const properties: Property[] = staticProperties;
 
+const propertyInclude = {
+  neighborhood: true,
+  propertyAmenities: { include: { amenity: true } },
+} as const;
+
 export async function getProperties(opts?: { verifiedOnly?: boolean }): Promise<Property[]> {
   try {
     const records = await prisma.property.findMany({
       where: opts?.verifiedOnly ? { verificationStatus: "VERIFIED" } : undefined,
-      include: { neighborhood: true },
+      include: propertyInclude,
       orderBy: { createdAt: "desc" },
     });
     if (records.length === 0) {
@@ -165,7 +195,7 @@ export async function getProperty(id: string): Promise<Property | undefined> {
   try {
     const record = await prisma.property.findUnique({
       where: { id },
-      include: { neighborhood: true },
+      include: propertyInclude,
     });
     if (record) {
       return mapDbProperty(record);

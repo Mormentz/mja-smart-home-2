@@ -5,7 +5,7 @@ import { MoveInPanel } from "@/components/dashboard/move-in-panel";
 import { DashboardSection } from "@/components/dashboard/dashboard-section";
 
 export default async function MoveInPage() {
-  await requireRole(["RENTER"]);
+  await requireRole(["USER"]);
   const [requests, leases] = await Promise.all([getMoveInRequests(), getRenterLeases()]);
 
   return (

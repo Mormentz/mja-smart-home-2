@@ -18,7 +18,7 @@ const moveInSchema = z.object({
 export async function createOrUpdateMoveIn(data: z.infer<typeof moveInSchema>) {
   const session = await auth();
   if (!session?.user?.id) return { error: "Unauthorized" };
-  if (session.user.role !== "RENTER") return { error: "Only renters can request move-in support" };
+  if (session.user.role !== "USER") return { error: "Only users can request move-in support" };
 
   const parsed = moveInSchema.safeParse(data);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid request" };

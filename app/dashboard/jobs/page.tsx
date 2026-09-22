@@ -4,7 +4,7 @@ import { JobsPanel } from "@/components/dashboard/jobs-panel";
 import { DashboardSection } from "@/components/dashboard/dashboard-section";
 
 export default async function JobsPage() {
-  const session = await requireRole(["RENTER", "BUYER", "ARTISAN"]);
+  const session = await requireRole(["USER", "AGENT", "ARTISAN"]);
   const isArtisan = session.user.role === "ARTISAN";
   const jobs = isArtisan ? await getArtisanJobs() : await getCustomerJobs();
 

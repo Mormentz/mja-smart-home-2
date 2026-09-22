@@ -37,8 +37,7 @@ export function PropertyActions({
   const [saved, setSaved] = useState(initiallySaved);
 
   const role = session?.user?.role;
-  const isBuyer = role === "BUYER";
-  const isRenter = role === "RENTER";
+  const isUser = role === "USER";
 
   function requireLogin(callbackUrl: string) {
     router.push(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
@@ -54,7 +53,8 @@ export function PropertyActions({
       return;
     }
     setLoading(true);
-    const kind = isBuyer && propertyType === "For Sale" ? "PURCHASE_INTEREST" : "TOUR";
+    const kind =
+      isUser && propertyType === "For Sale" ? "PURCHASE_INTEREST" : "TOUR";
     const result = await createBooking({ propertyId, preferredDate, kind });
     setLoading(false);
     if (result.error) {
@@ -126,6 +126,7 @@ export function PropertyActions({
       recipientId: ownerId,
       propertyId,
       content: message,
+      attachments: [{ kind: "PROPERTY", propertyId }],
     });
     setLoading(false);
     if (result.error) {
@@ -136,9 +137,8 @@ export function PropertyActions({
     setShowMessage(false);
   }
 
-  const primaryLabel = isBuyer && propertyType === "For Sale"
-    ? "Express purchase interest"
-    : "Book a tour";
+  const primaryLabel =
+    isUser && propertyType === "For Sale" ? "Express purchase interest" : "Book a tour";
 
   return (
     <>
@@ -185,7 +185,7 @@ export function PropertyActions({
       >
         {loading ? "Submitting..." : session ? primaryLabel : "Sign in to continue"}
       </button>
-      {isRenter && propertyType === "For Rent" && (
+      {isUser && propertyType === "For Rent" && (
         <button
           type="button"
           onClick={handleStartLease}
@@ -195,7 +195,7 @@ export function PropertyActions({
           Secure rent with escrow
         </button>
       )}
-      {(isRenter || isBuyer || !session) && (
+      {(isUser || !session) && (
         <button
           type="button"
           onClick={handleSave}

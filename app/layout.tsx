@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Manrope, Plus_Jakarta_Sans } from "next/font/google";
 import { AuthSessionProvider } from "@/components/providers/session-provider";
+import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
@@ -43,8 +44,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${manrope.variable} ${plusJakarta.variable} h-full`} suppressHydrationWarning>
       <body className="min-h-full antialiased" suppressHydrationWarning>
-        <AuthSessionProvider>{children}</AuthSessionProvider>
-        <Toaster />
+        <ThemeProvider>
+          <AuthSessionProvider>{children}</AuthSessionProvider>
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );

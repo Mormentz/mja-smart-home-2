@@ -1,7 +1,8 @@
 "use server";
 
 import bcrypt from "bcryptjs";
-import { Role } from "@prisma/client";
+import { KycLevel, Role, VerificationStatus } from "@prisma/client";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 
@@ -9,10 +10,20 @@ const registerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
-  role: z.enum(["RENTER", "BUYER", "LANDLORD", "AGENT", "ARTISAN"]),
+  role: z.enum(["USER", "AGENT", "ARTISAN"]),
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;
+
+function kycDefaults(role: "USER" | "AGENT" | "ARTISAN") {
+  if (role === "AGENT") {
+    return { kycLevel: KycLevel.STANDARD, kycStatus: VerificationStatus.PENDING };
+  }
+  if (role === "ARTISAN") {
+    return { kycLevel: KycLevel.ENHANCED, kycStatus: VerificationStatus.PENDING };
+  }
+  return { kycLevel: KycLevel.BASIC, kycStatus: VerificationStatus.UNVERIFIED };
+}
 
 export async function registerUser(data: RegisterInput) {
   const parsed = registerSchema.safeParse(data);
@@ -29,6 +40,7 @@ export async function registerUser(data: RegisterInput) {
   }
 
   const passwordHash = await bcrypt.hash(password, 12);
+  const kyc = kycDefaults(role);
 
   await prisma.user.create({
     data: {
@@ -36,15 +48,16 @@ export async function registerUser(data: RegisterInput) {
       email: normalizedEmail,
       passwordHash,
       role: role as Role,
+      ...kyc,
     },
   });
 
   if (role === "ARTISAN") {
-    const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
-    if (user) {
+    const created = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+    if (created) {
       await prisma.serviceProfile.create({
         data: {
-          userId: user.id,
+          userId: created.id,
           trade: "General Services",
           bio: "Tell clients about your trade and experience.",
         },
@@ -55,7 +68,7 @@ export async function registerUser(data: RegisterInput) {
   return { success: true };
 }
 
-export async function updateProfile(data: { name: string }) {
+export async function updateProfile(data: { name: string; phone?: string }) {
   const { auth } = await import("@/auth");
   const session = await auth();
   if (!session?.user?.id) {
@@ -69,8 +82,51 @@ export async function updateProfile(data: { name: string }) {
 
   await prisma.user.update({
     where: { id: session.user.id },
-    data: { name },
+    data: {
+      name,
+      phone: data.phone?.trim() || undefined,
+    },
   });
 
+  revalidatePath("/dashboard/settings");
+  return { success: true };
+}
+
+export async function submitKyc(data: { phone: string }) {
+  const { auth } = await import("@/auth");
+  const session = await auth();
+  if (!session?.user?.id) return { error: "Unauthorized" };
+
+  const phone = data.phone.trim();
+  if (phone.length < 7) return { error: "Enter a valid phone number" };
+
+  const user = await prisma.user.findUnique({ where: { id: session.user.id } });
+  if (!user) return { error: "User not found" };
+
+  if (user.role === "USER") {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        phone,
+        kycLevel: KycLevel.BASIC,
+        kycStatus: VerificationStatus.VERIFIED,
+        kycNote: null,
+      },
+    });
+    revalidatePath("/dashboard/settings");
+    return { success: true };
+  }
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      phone,
+      kycStatus: VerificationStatus.PENDING,
+      kycNote: null,
+    },
+  });
+
+  revalidatePath("/dashboard/settings");
+  revalidatePath("/dashboard/admin/verifications");
   return { success: true };
 }

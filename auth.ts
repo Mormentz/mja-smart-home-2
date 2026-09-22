@@ -25,7 +25,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const password = String(credentials.password);
 
         const user = await prisma.user.findUnique({ where: { email } });
-        if (!user?.passwordHash) {
+        if (!user?.passwordHash || !user.active) {
           return null;
         }
 

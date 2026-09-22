@@ -17,7 +17,7 @@ export function DashboardShell({ role, pendingBookings, unreadMessages, children
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-[#f4f6f8]">
+    <div className="flex h-dvh min-h-0 min-w-0 overflow-hidden bg-muted/40">
       <DashboardSidebar
         role={role}
         pendingBookings={pendingBookings}
@@ -36,9 +36,16 @@ export function DashboardShell({ role, pendingBookings, unreadMessages, children
         </SheetContent>
       </Sheet>
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <DashboardHeader onMenuClick={() => setMobileOpen(true)} unreadMessages={unreadMessages} />
-        <main className="flex-1 p-4 lg:p-6">{children}</main>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <DashboardHeader
+          onMenuClick={() => setMobileOpen(true)}
+          unreadMessages={unreadMessages}
+          role={role}
+          pendingBookings={pendingBookings}
+        />
+        <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
+          <div className="mx-auto w-full min-w-0 max-w-[1200px] p-3 lg:p-5">{children}</div>
+        </main>
       </div>
     </div>
   );

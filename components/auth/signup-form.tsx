@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import type { Role } from "@prisma/client";
 import { Eye, EyeOff, Lock, Mail, User } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { registerUser } from "@/lib/actions/auth";
@@ -12,14 +11,15 @@ import { AuthDivider, AuthField, AuthPrimaryButton } from "@/components/auth/aut
 import { GoogleAuthButton } from "@/components/auth/google-auth-button";
 import { Checkbox } from "@/components/ui/checkbox";
 
-const ROLES: Role[] = ["RENTER", "BUYER", "LANDLORD", "AGENT", "ARTISAN"];
+const ROLES = ["USER", "AGENT", "ARTISAN"] as const;
+type SignupRole = (typeof ROLES)[number];
 
 export function SignupForm() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<Role>("RENTER");
+  const [role, setRole] = useState<SignupRole>("USER");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,12 +43,7 @@ export function SignupForm() {
     setLoading(true);
     setError(null);
 
-    const result = await registerUser({
-      name,
-      email,
-      password,
-      role: role as "RENTER" | "BUYER" | "LANDLORD" | "AGENT" | "ARTISAN",
-    });
+    const result = await registerUser({ name, email, password, role });
     if (result.error) {
       setLoading(false);
       setError(result.error);
@@ -135,7 +130,7 @@ export function SignupForm() {
         <select
           id="role"
           value={role}
-          onChange={(e) => setRole(e.target.value as Role)}
+          onChange={(e) => setRole(e.target.value as SignupRole)}
           className="w-full h-12 rounded-full border border-border/80 bg-white px-4 text-sm outline-none focus:border-ink/30 focus:ring-2 focus:ring-ink/5"
         >
           {ROLES.map((r) => (
@@ -144,6 +139,11 @@ export function SignupForm() {
             </option>
           ))}
         </select>
+        <p className="text-xs text-muted-foreground">
+          {role === "USER" && "Rent or buy homes, use escrow, and hire artisans."}
+          {role === "AGENT" && "List properties for sale or rent (covers landlords)."}
+          {role === "ARTISAN" && "Offer verified home services."}
+        </p>
       </div>
 
       <label className="flex items-start gap-3 pt-5 cursor-pointer">

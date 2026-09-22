@@ -7,8 +7,8 @@ import { prisma } from "@/lib/prisma";
 export async function toggleSavedProperty(propertyId: string) {
   const session = await auth();
   if (!session?.user?.id) return { error: "Unauthorized" };
-  if (!["RENTER", "BUYER"].includes(session.user.role)) {
-    return { error: "Only renters and buyers can save homes" };
+  if (session.user.role !== "USER") {
+    return { error: "Only users can save homes" };
   }
 
   const existing = await prisma.savedProperty.findUnique({

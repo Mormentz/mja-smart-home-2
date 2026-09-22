@@ -1,8 +1,25 @@
 "use client";
 
+import { MoreHorizontal } from "lucide-react";
 import { activateLeaseWithEscrow } from "@/lib/actions/leases";
 import { releaseEscrow, refundEscrow } from "@/lib/actions/escrow";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  DashboardDataTable,
+  DashboardEmptyState,
+  DashboardTableCell,
+  DashboardTableHead,
+  Table,
+  TableBody,
+  TableHeader,
+  TableRow,
+} from "@/components/dashboard/dashboard-data-table";
 import { toast } from "sonner";
 
 type LeaseRow = {
@@ -48,60 +65,115 @@ export function LeasesPanel({
   }
 
   if (leases.length === 0) {
-    return (
-      <div className="rounded-3xl border border-dashed border-border p-10 text-center text-muted-foreground">
-        No leases yet.
-      </div>
-    );
+    return <DashboardEmptyState>No leases yet.</DashboardEmptyState>;
   }
 
   return (
-    <div className="space-y-4">
-      {leases.map((lease) => (
-        <div key={lease.id} className="rounded-3xl border border-border bg-card p-5 shadow-soft">
-          <div className="flex flex-wrap justify-between gap-3">
-            <div>
-              <h3 className="font-display text-lg font-semibold">{lease.property.title}</h3>
-              <p className="text-sm text-muted-foreground">{lease.property.location}</p>
-              <p className="mt-2 text-sm">
-                ${lease.monthlyRent.toLocaleString()}/mo · {lease.status}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                {new Date(lease.startDate).toLocaleDateString()} → {new Date(lease.endDate).toLocaleDateString()}
-              </p>
-              {mode === "landlord" && lease.renter && (
-                <p className="text-sm mt-1">Renter: {lease.renter.name ?? lease.renter.email}</p>
-              )}
-              {mode === "renter" && lease.landlord && (
-                <p className="text-sm mt-1">Landlord: {lease.landlord.name ?? lease.landlord.email}</p>
-              )}
-            </div>
-            {mode === "renter" && lease.status === "DRAFT" && (
-              <Button size="sm" onClick={() => fund(lease.id)}>
-                Fund escrow & activate
-              </Button>
-            )}
-          </div>
-          {lease.escrowPayments.length > 0 && (
-            <div className="mt-4 border-t border-border pt-4 space-y-2">
-              <p className="text-xs uppercase tracking-widest text-muted-foreground">Escrow</p>
-              {lease.escrowPayments.map((p) => (
-                <div key={p.id} className="flex flex-wrap items-center justify-between gap-2 text-sm">
-                  <span>
-                    ${p.amount} · {p.purpose} · {p.status}
+    <DashboardDataTable>
+      <Table>
+        <TableHeader>
+          <TableRow className="hover:bg-transparent">
+            <DashboardTableHead>Property</DashboardTableHead>
+            <DashboardTableHead>Party</DashboardTableHead>
+            <DashboardTableHead>Status</DashboardTableHead>
+            <DashboardTableHead className="text-right">Rent</DashboardTableHead>
+            <DashboardTableHead>Period</DashboardTableHead>
+            <DashboardTableHead>Escrow</DashboardTableHead>
+            <DashboardTableHead className="text-right">Actions</DashboardTableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {leases.map((lease) => {
+            const party =
+              mode === "landlord"
+                ? lease.renter
+                  ? (lease.renter.name ?? lease.renter.email)
+                  : "—"
+                : lease.landlord
+                  ? (lease.landlord.name ?? lease.landlord.email)
+                  : "—";
+            const held = lease.escrowPayments.filter((p) => p.status === "HELD");
+            return (
+              <TableRow key={lease.id} className="border-border/40">
+                <DashboardTableCell>
+                  <p className="font-medium leading-tight">{lease.property.title}</p>
+                  <p className="text-[11px] text-muted-foreground">{lease.property.location}</p>
+                </DashboardTableCell>
+                <DashboardTableCell className="text-xs">{party}</DashboardTableCell>
+                <DashboardTableCell>
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase">
+                    {lease.status}
                   </span>
-                  {mode === "landlord" && p.status === "HELD" && (
-                    <div className="flex gap-2">
-                      <Button size="sm" onClick={() => release(p.id)}>Release</Button>
-                      <Button size="sm" variant="outline" onClick={() => refund(p.id)}>Refund</Button>
+                </DashboardTableCell>
+                <DashboardTableCell className="text-right tabular-nums font-medium">
+                  ${lease.monthlyRent.toLocaleString()}
+                </DashboardTableCell>
+                <DashboardTableCell className="text-[11px] text-muted-foreground whitespace-nowrap">
+                  {new Date(lease.startDate).toLocaleDateString()} →{" "}
+                  {new Date(lease.endDate).toLocaleDateString()}
+                </DashboardTableCell>
+                <DashboardTableCell className="text-xs">
+                  {lease.escrowPayments.length === 0 ? (
+                    <span className="text-muted-foreground">—</span>
+                  ) : (
+                    <div className="space-y-0.5">
+                      {lease.escrowPayments.map((p) => (
+                        <div key={p.id} className="flex items-center gap-1.5">
+                          <span>
+                            ${p.amount} {p.status}
+                          </span>
+                          {mode === "landlord" && p.status === "HELD" && (
+                            <>
+                              <button
+                                type="button"
+                                className="text-[10px] font-medium text-primary hover:underline"
+                                onClick={() => release(p.id)}
+                              >
+                                Release
+                              </button>
+                              <button
+                                type="button"
+                                className="text-[10px] font-medium text-muted-foreground hover:underline"
+                                onClick={() => refund(p.id)}
+                              >
+                                Refund
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
+                </DashboardTableCell>
+                <DashboardTableCell className="text-right">
+                  {mode === "renter" && lease.status === "DRAFT" ? (
+                    <Button size="sm" className="h-7 text-xs" onClick={() => fund(lease.id)}>
+                      Fund escrow
+                    </Button>
+                  ) : held.length > 0 && mode === "landlord" ? (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-7 w-7">
+                          <MoreHorizontal size={14} />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {held.map((p) => (
+                          <DropdownMenuItem key={p.id} onClick={() => release(p.id)}>
+                            Release ${p.amount}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">—</span>
+                  )}
+                </DashboardTableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+    </DashboardDataTable>
   );
 }

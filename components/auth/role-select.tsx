@@ -4,15 +4,13 @@ import type { Role } from "@prisma/client";
 import { cn } from "@/lib/utils";
 import { roleLabel } from "@/lib/auth/role-labels";
 
-const ROLES: Role[] = ["RENTER", "BUYER", "LANDLORD", "AGENT", "ARTISAN"];
+const ROLES: Role[] = ["USER", "AGENT", "ARTISAN"];
 
 const roleDescriptions: Record<Role, string> = {
-  RENTER: "Browse rentals and book tours",
-  BUYER: "Explore homes for sale",
-  LANDLORD: "Manage your property listings",
-  AGENT: "Represent listings and clients",
+  USER: "Rent or buy homes, use escrow, and hire artisans",
+  AGENT: "List properties for sale or rent (includes landlords)",
   ARTISAN: "Offer verified home services",
-  ADMIN: "Verify listings and artisans",
+  ADMIN: "Manage the full platform",
 };
 
 type RoleSelectProps = {

@@ -22,23 +22,21 @@ export async function createBooking(data: {
     return { error: "You must be signed in to book" };
   }
 
-  if (!["RENTER", "BUYER"].includes(session.user.role)) {
-    return { error: "Only renters and buyers can create booking requests" };
+  if (!["USER", "AGENT"].includes(session.user.role)) {
+    return { error: "Only users and agents can book" };
   }
 
   const parsed = bookingSchema.safeParse({
     ...data,
-    kind: data.kind ?? (session.user.role === "BUYER" ? "PURCHASE_INTEREST" : "TOUR"),
+    kind: data.kind ?? "TOUR",
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid booking details" };
   }
 
-  if (session.user.role === "BUYER" && parsed.data.kind === "TOUR") {
-    // buyers may still tour
-  }
-  if (session.user.role === "RENTER" && parsed.data.kind === "PURCHASE_INTEREST") {
-    return { error: "Purchase interest is for buyers" };
+  // USER can tour and express purchase interest; AGENT can tour for clients
+  if (session.user.role === "AGENT" && parsed.data.kind === "PURCHASE_INTEREST") {
+    return { error: "Purchase interest is for home seekers" };
   }
 
   const preferredDate = new Date(parsed.data.preferredDate);

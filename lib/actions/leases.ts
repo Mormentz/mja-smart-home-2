@@ -16,7 +16,7 @@ const leaseSchema = z.object({
 export async function createLeaseDraft(data: z.infer<typeof leaseSchema>) {
   const session = await auth();
   if (!session?.user?.id) return { error: "Unauthorized" };
-  if (session.user.role !== "RENTER") return { error: "Only renters can start a lease" };
+  if (session.user.role !== "USER") return { error: "Only users can start a lease" };
 
   const parsed = leaseSchema.safeParse(data);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid lease" };

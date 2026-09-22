@@ -61,13 +61,13 @@ export function MoveInPanel({
   }
 
   return (
-    <div className="space-y-8">
-      <div className="rounded-3xl border border-border bg-card p-6 space-y-4 max-w-xl">
-        <h3 className="font-display text-lg font-semibold">Request move-in support</h3>
+    <div className="space-y-4">
+      <div className="max-w-xl space-y-3 rounded-xl border border-border/60 bg-card p-4 shadow-sm">
+        <h3 className="font-display text-sm font-semibold">Request move-in support</h3>
         <div className="space-y-2">
           <Label>Lease / property</Label>
           <select
-            className="w-full h-10 rounded-md border border-input px-3"
+            className="h-9 w-full rounded-md border border-input px-3 text-sm"
             value={leaseId}
             onChange={(e) => {
               const lease = leases.find((l) => l.id === e.target.value);
@@ -95,27 +95,31 @@ export function MoveInPanel({
           <input type="checkbox" checked={utilities} onChange={(e) => setUtilities(e.target.checked)} />
           Utilities setup
         </label>
-        <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Notes" rows={3} />
-        <Button onClick={submit} disabled={loading || leases.length === 0}>
+        <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Notes" rows={2} />
+        <Button size="sm" onClick={submit} disabled={loading || leases.length === 0}>
           {loading ? "Saving..." : "Save checklist"}
         </Button>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-2">
         {requests.map((r) => (
-          <div key={r.id} className="rounded-2xl border border-border p-4 flex flex-wrap justify-between gap-3">
-            <div>
-              <p className="font-semibold">{r.property.title}</p>
-              <p className="text-sm text-muted-foreground">{r.status}</p>
-              <p className="text-xs mt-1">
+          <div
+            key={r.id}
+            className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/60 bg-card px-3 py-2.5 shadow-sm"
+          >
+            <div className="min-w-0">
+              <p className="text-sm font-medium">{r.property.title}</p>
+              <p className="text-[11px] text-muted-foreground">
+                {r.status}
+                {" · "}
                 {[r.moving && "Moving", r.furnishing && "Furnishing", r.utilities && "Utilities"]
                   .filter(Boolean)
                   .join(" · ")}
               </p>
-              {r.notes && <p className="text-sm mt-1">{r.notes}</p>}
+              {r.notes && <p className="mt-0.5 text-xs text-muted-foreground">{r.notes}</p>}
             </div>
             {r.status !== "DONE" && (
-              <Button size="sm" variant="outline" onClick={() => done(r.id)}>
+              <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => done(r.id)}>
                 Mark done
               </Button>
             )}

@@ -4,6 +4,7 @@ import type { PropertyCategory, PropertyType } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { auth } from "@/auth";
+import { setPropertyAmenities } from "@/lib/actions/amenities";
 import { prisma } from "@/lib/prisma";
 
 const listingSchema = z.object({
@@ -18,9 +19,10 @@ const listingSchema = z.object({
   baths: z.coerce.number().int().min(0),
   area: z.coerce.number().int().positive(),
   image: z.string().min(1),
+  images: z.array(z.string()).default([]),
   featured: z.boolean().optional(),
   description: z.string().min(10),
-  amenities: z.array(z.string()).default([]),
+  amenityIds: z.array(z.string()).default([]),
   tourUrl: z.string().url().optional().or(z.literal("")),
   neighborhoodId: z.string().optional().or(z.literal("")),
 });
@@ -33,7 +35,10 @@ export async function getOwnerListings() {
 
   return prisma.property.findMany({
     where: { ownerId: session.user.id },
-    include: { neighborhood: true },
+    include: {
+      neighborhood: true,
+      propertyAmenities: { include: { amenity: true } },
+    },
     orderBy: { createdAt: "desc" },
   });
 }
@@ -44,8 +49,13 @@ export async function createListing(data: z.infer<typeof listingSchema>) {
     return { error: "Unauthorized" };
   }
 
-  if (!["LANDLORD", "AGENT"].includes(session.user.role)) {
-    return { error: "Only landlords and agents can manage listings" };
+  if (session.user.role !== "AGENT") {
+    return { error: "Only agents can manage listings" };
+  }
+
+  const agentUser = await prisma.user.findUnique({ where: { id: session.user.id } });
+  if (agentUser?.kycStatus !== "VERIFIED") {
+    return { error: "Complete KYC verification before publishing listings" };
   }
 
   const parsed = listingSchema.safeParse(data);
@@ -58,11 +68,14 @@ export async function createListing(data: z.infer<typeof listingSchema>) {
     return { error: "A listing with this ID already exists" };
   }
 
-  const { tourUrl, neighborhoodId, ...rest } = parsed.data;
+  const { tourUrl, neighborhoodId, amenityIds, images, ...rest } = parsed.data;
+  const gallery = images.length > 0 ? images : [parsed.data.image];
 
   await prisma.property.create({
     data: {
       ...rest,
+      images: gallery,
+      amenities: [],
       type: parsed.data.type as PropertyType,
       category: parsed.data.category as PropertyCategory,
       ownerId: session.user.id,
@@ -70,6 +83,8 @@ export async function createListing(data: z.infer<typeof listingSchema>) {
       neighborhoodId: neighborhoodId || null,
     },
   });
+
+  await setPropertyAmenities(parsed.data.id, amenityIds);
 
   revalidatePath("/dashboard/listings");
   revalidatePath("/properties");
@@ -90,6 +105,13 @@ export async function updateListing(
     return { error: "Listing not found" };
   }
 
+  const gallery =
+    data.images && data.images.length > 0
+      ? data.images
+      : data.image
+        ? [data.image]
+        : undefined;
+
   await prisma.property.update({
     where: { id },
     data: {
@@ -103,13 +125,17 @@ export async function updateListing(
       baths: data.baths,
       area: data.area,
       image: data.image,
+      images: gallery,
       featured: data.featured,
       description: data.description,
-      amenities: data.amenities,
       tourUrl: data.tourUrl === "" ? null : data.tourUrl,
       neighborhoodId: data.neighborhoodId === "" ? null : data.neighborhoodId,
     },
   });
+
+  if (data.amenityIds) {
+    await setPropertyAmenities(id, data.amenityIds);
+  }
 
   revalidatePath("/dashboard/listings");
   revalidatePath("/properties");

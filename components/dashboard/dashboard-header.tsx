@@ -1,12 +1,24 @@
 "use client";
 
-import { Bell, Menu, Moon, Search, Sun } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
 import { useSession } from "next-auth/react";
-import { useState } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
+import type { Role } from "@prisma/client";
+import { Bell, Menu, Moon, Search, Sun } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,63 +29,179 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { roleLabel } from "@/lib/auth/role-labels";
 import { SignOutButton } from "@/components/dashboard/sign-out-button";
+import {
+  getHeaderNotifications,
+  getUnreadMessageCount,
+  searchDashboard,
+  type SearchHit,
+} from "@/lib/actions/dashboard-header";
 
 type DashboardHeaderProps = {
   onMenuClick?: () => void;
   unreadMessages?: number;
+  role?: Role;
+  pendingBookings?: number;
 };
 
-export function DashboardHeader({ onMenuClick, unreadMessages = 0 }: DashboardHeaderProps) {
+export function DashboardHeader({
+  onMenuClick,
+  unreadMessages: initialUnread = 0,
+  role,
+}: DashboardHeaderProps) {
   const { data: session } = useSession();
-  const [dark, setDark] = useState(false);
+  const { resolvedTheme, setTheme } = useTheme();
+  const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [hits, setHits] = useState<SearchHit[]>([]);
+  const [query, setQuery] = useState("");
+  const [pending, startTransition] = useTransition();
+  const [unread, setUnread] = useState(initialUnread);
+  const [notifications, setNotifications] = useState<
+    { id: string; title: string; href: string; meta?: string }[]
+  >([]);
 
-  const initials = session?.user?.name
-    ?.split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase() ?? "HC";
+  useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    setUnread(initialUnread);
+  }, [initialUnread]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  useEffect(() => {
+    if (!searchOpen) return;
+    startTransition(async () => {
+      const results = await searchDashboard(query);
+      setHits(results);
+    });
+  }, [searchOpen, query]);
+
+  const refreshUnread = useCallback(async () => {
+    const count = await getUnreadMessageCount();
+    setUnread(count);
+  }, []);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      void refreshUnread();
+    }, 10000);
+    return () => clearInterval(id);
+  }, [refreshUnread]);
+
+  async function loadNotifications() {
+    const data = await getHeaderNotifications();
+    setNotifications(data.items);
+    setUnread(data.unreadMessages);
+  }
+
+  const initials =
+    session?.user?.name
+      ?.split(" ")
+      .map((n) => n[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() ?? "HC";
+
+  const isDark = mounted && resolvedTheme === "dark";
+
+  const pageHits = hits.filter((h) => h.group === "Pages");
+  const propertyHits = hits.filter((h) => h.group === "Properties");
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border/60 bg-card/95 backdrop-blur px-4 lg:px-6">
-      <Button variant="ghost" size="icon" className="lg:hidden shrink-0" onClick={onMenuClick}>
+    <header className="sticky top-0 z-50 flex h-14 items-center gap-3 border-b border-border/60 bg-card/95 px-3 backdrop-blur lg:h-16 lg:gap-4 lg:px-6">
+      <Button variant="ghost" size="icon" className="shrink-0 lg:hidden" onClick={onMenuClick}>
         <Menu size={20} />
       </Button>
 
-      <div className="relative flex-1 max-w-xl">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          placeholder="Search anything..."
-          className="h-10 rounded-xl border-border/60 bg-muted/40 pl-9 pr-16"
-        />
-        <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border bg-background px-1.5 text-[10px] text-muted-foreground">
+      <button
+        type="button"
+        onClick={() => setSearchOpen(true)}
+        className="relative flex h-9 max-w-md flex-1 items-center rounded-xl border border-border/60 bg-muted/40 px-3 text-left text-sm text-muted-foreground transition hover:bg-muted/60 lg:h-10"
+      >
+        <Search size={16} className="mr-2 shrink-0" />
+        <span className="flex-1 truncate">Search pages & properties…</span>
+        <kbd className="pointer-events-none ml-2 hidden h-5 select-none items-center gap-1 rounded border bg-background px-1.5 text-[10px] sm:inline-flex">
           ⌘K
         </kbd>
-      </div>
+      </button>
 
-      <div className="flex items-center gap-1.5 shrink-0">
+      <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
         <Button
           variant="ghost"
           size="icon"
           className="rounded-xl"
-          onClick={() => setDark((v) => !v)}
+          onClick={() => setTheme(isDark ? "light" : "dark")}
           aria-label="Toggle theme"
         >
-          {dark ? <Sun size={18} /> : <Moon size={18} />}
+          {isDark ? <Sun size={18} /> : <Moon size={18} />}
         </Button>
 
-        <Button variant="ghost" size="icon" className="rounded-xl relative">
-          <Bell size={18} />
-          {unreadMessages > 0 && (
-            <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-destructive" />
-          )}
-        </Button>
+        <DropdownMenu
+          onOpenChange={(open) => {
+            if (open) void loadNotifications();
+          }}
+        >
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="relative rounded-xl" aria-label="Notifications">
+              <Bell size={18} />
+              {unread > 0 && (
+                <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-destructive" />
+              )}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-80">
+            <DropdownMenuLabel className="flex items-center justify-between">
+              <span>Notifications</span>
+              {unread > 0 && (
+                <Badge variant="secondary" className="text-[10px]">
+                  {unread} unread
+                </Badge>
+              )}
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {notifications.length === 0 ? (
+              <div className="px-2 py-6 text-center text-sm text-muted-foreground">
+                You&apos;re all caught up.
+              </div>
+            ) : (
+              notifications.map((n) => (
+                <DropdownMenuItem key={n.id} asChild className="cursor-pointer flex-col items-start gap-0.5 py-2">
+                  <Link href={n.href}>
+                    <span className="font-medium">{n.title}</span>
+                    {n.meta && (
+                      <span className="text-xs text-muted-foreground line-clamp-1">{n.meta}</span>
+                    )}
+                  </Link>
+                </DropdownMenuItem>
+              ))
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href="/dashboard/messages">Open messages</Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button type="button" className="ml-1 flex items-center gap-2 rounded-xl p-1 hover:bg-muted transition outline-none">
-              <Avatar className="h-9 w-9 border">
-                <AvatarFallback className="bg-primary/15 text-primary text-xs font-semibold">{initials}</AvatarFallback>
+            <button
+              type="button"
+              className="ml-0.5 flex items-center gap-2 rounded-xl p-1 outline-none transition hover:bg-muted"
+            >
+              <Avatar className="h-8 w-8 border lg:h-9 lg:w-9">
+                <AvatarFallback className="bg-primary/15 text-xs font-semibold text-primary">
+                  {initials}
+                </AvatarFallback>
               </Avatar>
             </button>
           </DropdownMenuTrigger>
@@ -82,7 +210,11 @@ export function DashboardHeader({ onMenuClick, unreadMessages = 0 }: DashboardHe
               <div className="flex flex-col gap-1">
                 <span>{session?.user?.name}</span>
                 <span className="text-xs font-normal text-muted-foreground">
-                  {session?.user?.role ? roleLabel(session.user.role) : "Member"}
+                  {session?.user?.role
+                    ? roleLabel(session.user.role)
+                    : role
+                      ? roleLabel(role)
+                      : "Member"}
                 </span>
               </div>
             </DropdownMenuLabel>
@@ -98,6 +230,51 @@ export function DashboardHeader({ onMenuClick, unreadMessages = 0 }: DashboardHe
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      <CommandDialog open={searchOpen} onOpenChange={setSearchOpen}>
+        <CommandInput
+          placeholder="Search pages and properties…"
+          value={query}
+          onValueChange={setQuery}
+        />
+        <CommandList>
+          <CommandEmpty>{pending ? "Searching…" : "No results found."}</CommandEmpty>
+          {pageHits.length > 0 && (
+            <CommandGroup heading="Pages">
+              {pageHits.map((h) => (
+                <CommandItem
+                  key={h.id}
+                  value={`${h.label} ${h.href}`}
+                  onSelect={() => {
+                    setSearchOpen(false);
+                    setQuery("");
+                    router.push(h.href);
+                  }}
+                >
+                  {h.label}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
+          {propertyHits.length > 0 && (
+            <CommandGroup heading="Properties">
+              {propertyHits.map((h) => (
+                <CommandItem
+                  key={h.id}
+                  value={`${h.label} ${h.href}`}
+                  onSelect={() => {
+                    setSearchOpen(false);
+                    setQuery("");
+                    router.push(h.href);
+                  }}
+                >
+                  {h.label}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
+        </CommandList>
+      </CommandDialog>
     </header>
   );
 }
@@ -112,23 +289,19 @@ export function DashboardPageToolbar({
   onExport?: () => void;
 }) {
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <h1 className="font-display text-2xl font-semibold tracking-tight">{title}</h1>
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <h1 className="font-display text-xl font-semibold tracking-tight lg:text-2xl">{title}</h1>
       <div className="flex flex-wrap items-center gap-2">
-        <Button variant="outline" size="sm" className="rounded-xl h-9 bg-card">
-          Jan 1, 2025 – Feb 1, 2025
-        </Button>
-        <Button variant="outline" size="sm" className="rounded-xl h-9 bg-card">
-          Last 30 days
-        </Button>
         {onAddWidget && (
-          <Button variant="outline" size="sm" className="rounded-xl h-9 bg-card" onClick={onAddWidget}>
+          <Button variant="outline" size="sm" className="h-9 rounded-xl bg-card" onClick={onAddWidget}>
             + Add widget
           </Button>
         )}
-        <Button size="sm" className="rounded-xl h-9" onClick={onExport}>
-          Export
-        </Button>
+        {onExport && (
+          <Button size="sm" className="h-9 rounded-xl" onClick={onExport}>
+            Export
+          </Button>
+        )}
       </div>
     </div>
   );

@@ -55,7 +55,7 @@ export function ServiceProfileForm({ profile }: ServiceProfileFormProps) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="rounded-3xl border border-border bg-card p-6 space-y-4 max-w-2xl">
+    <form onSubmit={onSubmit} className="rounded-xl border border-border/60 bg-card p-4 space-y-3 max-w-2xl shadow-sm">
       <div className="flex flex-wrap gap-2 text-sm">
         {profile?.verified && <span className="text-success font-medium">Verified artisan</span>}
         <span className="rounded-full bg-muted px-3 py-1 text-xs">{profile?.skillBadge ?? "NONE"} badge</span>

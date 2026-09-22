@@ -12,36 +12,30 @@ async function unsave(propertyId: string) {
 }
 
 export default async function SavedPage() {
-  await requireRole(["RENTER", "BUYER"]);
+  await requireRole(["USER"]);
   const saved = await getSavedProperties();
 
   return (
     <DashboardSection title="Saved homes" description="Homes you’ve bookmarked for later.">
       {saved.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-border p-10 text-center text-muted-foreground">
+        <div className="rounded-2xl border border-dashed border-border p-8 text-center text-muted-foreground">
           No saved homes.{" "}
           <Link href="/properties" className="text-primary underline">
             Browse properties
           </Link>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="grid gap-3 md:grid-cols-2">
           {saved.map((s) => (
             <div
               key={s.id}
-              className="rounded-3xl border border-border bg-card p-5 flex flex-wrap items-center justify-between gap-3"
+              className="rounded-2xl border border-border bg-card p-4 flex items-center justify-between gap-3"
             >
-              <div>
-                <Link href={`/properties/${s.property.id}`} className="font-display text-lg font-semibold hover:underline">
+              <div className="min-w-0">
+                <Link href={`/properties/${s.property.id}`} className="font-display font-semibold hover:underline truncate block">
                   {s.property.title}
                 </Link>
-                <p className="text-sm text-muted-foreground">{s.property.location}</p>
-                {s.property.neighborhood && (
-                  <p className="text-xs mt-1">
-                    Neighborhood safety {s.property.neighborhood.safety} · power{" "}
-                    {s.property.neighborhood.power}
-                  </p>
-                )}
+                <p className="text-sm text-muted-foreground truncate">{s.property.location}</p>
               </div>
               <form action={unsave.bind(null, s.propertyId)}>
                 <Button type="submit" variant="outline" size="sm">

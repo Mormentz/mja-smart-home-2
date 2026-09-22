@@ -46,6 +46,37 @@ export const SEED_NEIGHBORHOODS = [
   },
 ] as const;
 
+export const SEED_AMENITIES = [
+  { name: "Smart lock", slug: "smart-lock" },
+  { name: "EV charger", slug: "ev-charger" },
+  { name: "Solar backup", slug: "solar-backup" },
+  { name: "Garden", slug: "garden" },
+  { name: "Underfloor heating", slug: "underfloor-heating" },
+  { name: "Home office", slug: "home-office" },
+  { name: "Balcony garden", slug: "balcony-garden" },
+  { name: "Gym", slug: "gym" },
+  { name: "24/7 security", slug: "24-7-security" },
+  { name: "Fibre internet", slug: "fibre-internet" },
+  { name: "Parking", slug: "parking" },
+  { name: "Original hardwood", slug: "original-hardwood" },
+  { name: "Wine cellar", slug: "wine-cellar" },
+  { name: "Roof terrace", slug: "roof-terrace" },
+  { name: "Chef's kitchen", slug: "chefs-kitchen" },
+  { name: "Private lift", slug: "private-lift" },
+  { name: "Concierge", slug: "concierge" },
+  { name: "Panoramic view", slug: "panoramic-view" },
+  { name: "Marble finishes", slug: "marble-finishes" },
+  { name: "Home cinema", slug: "home-cinema" },
+  { name: "Infinity pool", slug: "infinity-pool" },
+  { name: "Beach access", slug: "beach-access" },
+  { name: "Staff quarters", slug: "staff-quarters" },
+  { name: "Outdoor kitchen", slug: "outdoor-kitchen" },
+  { name: "Cathedral ceiling", slug: "cathedral-ceiling" },
+  { name: "Skylight", slug: "skylight" },
+  { name: "Loft office", slug: "loft-office" },
+  { name: "Freight lift", slug: "freight-lift" },
+] as const;
+
 export const SEED_PROPERTIES = [
   {
     id: "riverstone-house",
@@ -60,6 +91,7 @@ export const SEED_PROPERTIES = [
     baths: 3,
     area: 3200,
     image: "property-1.jpg",
+    images: ["property-1.jpg", "property-2.jpg", "property-3.jpg"],
     featured: true,
     verificationStatus: "VERIFIED" as const,
     tourUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
@@ -80,6 +112,7 @@ export const SEED_PROPERTIES = [
     baths: 2,
     area: 1150,
     image: "property-2.jpg",
+    images: ["property-2.jpg", "property-1.jpg"],
     verificationStatus: "VERIFIED" as const,
     tourUrl: null,
     description:
@@ -99,6 +132,7 @@ export const SEED_PROPERTIES = [
     baths: 4,
     area: 4100,
     image: "property-3.jpg",
+    images: ["property-3.jpg", "property-4.jpg"],
     verificationStatus: "PENDING" as const,
     tourUrl: null,
     description:
@@ -118,6 +152,7 @@ export const SEED_PROPERTIES = [
     baths: 3,
     area: 2400,
     image: "property-4.jpg",
+    images: ["property-4.jpg", "property-5.jpg", "property-1.jpg"],
     featured: true,
     verificationStatus: "VERIFIED" as const,
     tourUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
@@ -138,6 +173,7 @@ export const SEED_PROPERTIES = [
     baths: 6,
     area: 6800,
     image: "property-5.jpg",
+    images: ["property-5.jpg", "property-6.jpg"],
     verificationStatus: "UNVERIFIED" as const,
     tourUrl: null,
     description:
@@ -157,6 +193,7 @@ export const SEED_PROPERTIES = [
     baths: 1,
     area: 980,
     image: "property-6.jpg",
+    images: ["property-6.jpg", "property-2.jpg"],
     verificationStatus: "VERIFIED" as const,
     tourUrl: null,
     description:
@@ -166,12 +203,34 @@ export const SEED_PROPERTIES = [
 ] as const;
 
 export const DEMO_USERS = [
-  { email: "admin@demo.com", name: "Ava Admin", role: "ADMIN" as const },
-  { email: "renter@demo.com", name: "Ada Renter", role: "RENTER" as const },
-  { email: "buyer@demo.com", name: "Ben Buyer", role: "BUYER" as const },
-  { email: "landlord@demo.com", name: "Lara Landlord", role: "LANDLORD" as const },
-  { email: "agent@demo.com", name: "Alex Agent", role: "AGENT" as const },
-  { email: "artisan@demo.com", name: "Sam Artisan", role: "ARTISAN" as const },
+  {
+    email: "admin@demo.com",
+    name: "Ava Admin",
+    role: "ADMIN" as const,
+    kycLevel: "ENHANCED" as const,
+    kycStatus: "VERIFIED" as const,
+  },
+  {
+    email: "user@demo.com",
+    name: "Ada User",
+    role: "USER" as const,
+    kycLevel: "BASIC" as const,
+    kycStatus: "VERIFIED" as const,
+  },
+  {
+    email: "agent@demo.com",
+    name: "Alex Agent",
+    role: "AGENT" as const,
+    kycLevel: "STANDARD" as const,
+    kycStatus: "VERIFIED" as const,
+  },
+  {
+    email: "artisan@demo.com",
+    name: "Sam Artisan",
+    role: "ARTISAN" as const,
+    kycLevel: "ENHANCED" as const,
+    kycStatus: "VERIFIED" as const,
+  },
 ] as const;
 
 export const DEMO_PASSWORD = "password123";

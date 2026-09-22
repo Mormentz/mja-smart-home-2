@@ -82,7 +82,7 @@ export async function getDashboardData(
   role: Role,
   userName: string | null | undefined,
 ): Promise<DashboardData> {
-  const isOwner = role === "LANDLORD" || role === "AGENT";
+  const isOwner = role === "AGENT";
   const isArtisan = role === "ARTISAN";
   const isAdmin = role === "ADMIN";
 
@@ -101,9 +101,9 @@ export async function getDashboardData(
     pendingArtisanVerifications,
     openJobs,
     propertyReviews,
-    renterCount,
-    buyerCount,
-    landlordCount,
+    userCount,
+    agentCount,
+    artisanCount,
     verifiedListings,
   ] = await Promise.all([
     prisma.booking.count({ where: { userId } }),
@@ -163,9 +163,9 @@ export async function getDashboardData(
           : { authorId: userId },
       select: { rating: true },
     }),
-    prisma.user.count({ where: { role: "RENTER" } }),
-    prisma.user.count({ where: { role: "BUYER" } }),
-    prisma.user.count({ where: { role: "LANDLORD" } }),
+    prisma.user.count({ where: { role: "USER" } }),
+    prisma.user.count({ where: { role: "AGENT" } }),
+    prisma.user.count({ where: { role: "ARTISAN" } }),
     prisma.property.count({ where: { verificationStatus: "VERIFIED" } }),
   ]);
 
@@ -238,9 +238,9 @@ export async function getDashboardData(
     },
     bookingTrend: buildTrendFromBookings(relatedBookings),
     segments: [
-      { label: "Renters", count: renterCount, tone: "blue" },
-      { label: "Buyers", count: buyerCount, tone: "green" },
-      { label: "Landlords", count: landlordCount, tone: "orange" },
+      { label: "Users", count: userCount, tone: "blue" },
+      { label: "Agents", count: agentCount, tone: "green" },
+      { label: "Artisans", count: artisanCount, tone: "orange" },
     ],
     topProperties,
     activeByDay: buildActiveByDay(relatedBookings),

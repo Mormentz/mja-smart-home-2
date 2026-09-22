@@ -8,7 +8,6 @@ import { Footer } from "@/components/site/Footer";
 import { PropertyActions } from "@/components/property-actions";
 import type { Property } from "@/lib/properties";
 import { imageSrc } from "@/lib/utils";
-import detailKitchen from "@/assets/detail-kitchen.jpg";
 
 export function PropertyDetailPage({
   property: p,
@@ -64,14 +63,38 @@ export function PropertyDetailPage({
           <img src={imageSrc(p.image)} alt={p.title} className="w-full h-full object-cover" width={1200} height={900} />
         </motion.div>
         <div className="grid grid-rows-2 gap-4">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }} className="rounded-3xl overflow-hidden shadow-soft">
-            <img src={imageSrc(detailKitchen)} alt="Interior kitchen" className="w-full h-full object-cover" loading="lazy" width={1400} height={900} />
-          </motion.div>
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }} className="rounded-3xl overflow-hidden shadow-soft">
-            <img src={imageSrc(similar[0]?.image ?? p.image)} alt="Additional view" className="w-full h-full object-cover" loading="lazy" width={1200} height={900} />
-          </motion.div>
+          {(p.images?.length > 1 ? p.images.slice(1, 3) : [p.images?.[0] ?? p.image, p.images?.[0] ?? p.image]).map(
+            (img, i) => (
+              <motion.div
+                key={`${p.id}-g-${i}`}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.1 * (i + 1) }}
+                className="rounded-3xl overflow-hidden shadow-soft"
+              >
+                <img
+                  src={imageSrc(img)}
+                  alt={`${p.title} gallery ${i + 2}`}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                  width={1200}
+                  height={900}
+                />
+              </motion.div>
+            ),
+          )}
         </div>
       </section>
+
+      {p.images && p.images.length > 3 && (
+        <section className="container-page mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {p.images.slice(3).map((img, i) => (
+            <div key={`${p.id}-extra-${i}`} className="aspect-[4/3] rounded-2xl overflow-hidden border border-border">
+              <img src={imageSrc(img)} alt="" className="w-full h-full object-cover" loading="lazy" />
+            </div>
+          ))}
+        </section>
+      )}
 
       {p.tourUrl && (
         <section className="container-page mt-10">

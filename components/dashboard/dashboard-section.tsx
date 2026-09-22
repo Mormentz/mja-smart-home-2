@@ -12,16 +12,18 @@ export function DashboardSection({
   showToolbar?: boolean;
 }) {
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-3 overflow-x-hidden lg:space-y-4">
       {showToolbar ? (
         <DashboardPageToolbar title={title} />
       ) : (
-        <div>
-          <h1 className="font-display text-2xl font-semibold tracking-tight">{title}</h1>
-          {description && <p className="mt-1.5 text-sm text-muted-foreground">{description}</p>}
+        <div className="min-w-0">
+          <h1 className="font-display text-xl font-semibold tracking-tight">{title}</h1>
+          {description && (
+            <p className="mt-1 hidden text-sm text-muted-foreground sm:block">{description}</p>
+          )}
         </div>
       )}
-      {children}
+      <div className="min-w-0">{children}</div>
     </div>
   );
 }
