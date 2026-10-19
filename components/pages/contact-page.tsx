@@ -1,8 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { Mail, MapPin, MessageCircle, Phone, Send } from "lucide-react";
+import { ArrowUpRight, Mail, MapPin, MessageCircle, Phone, Send, Wrench } from "lucide-react";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 
@@ -19,13 +20,37 @@ export default function ContactPage() {
               Say hello. We <span className="text-success">reply fast.</span>
             </h1>
             <p className="mt-6 text-ink-foreground/70 max-w-xl text-lg">
-              Support, partnerships, press or just to chat about where you'd like to live next.
+              Support, partnerships, press, artisan onboarding — or just chat about where you&apos;d like
+              to live next.
             </p>
           </motion.div>
         </div>
       </section>
 
-      <section className="container-page mt-20 grid lg:grid-cols-5 gap-10">
+      <section className="container-page mt-10">
+        <div className="flex flex-col gap-4 rounded-3xl border border-border bg-card p-6 md:flex-row md:items-center md:justify-between md:p-8">
+          <div className="flex gap-4">
+            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-primary text-primary-foreground">
+              <Wrench size={20} />
+            </div>
+            <div>
+              <p className="font-display text-xl font-semibold">Joining as an artisan?</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Register for Artisans Hub in Abuja — verification, jobs, and escrow pay.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/artisans/join"
+            className="group inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:brightness-110"
+          >
+            Become an artisan
+            <ArrowUpRight size={16} className="transition-transform group-hover:rotate-45" />
+          </Link>
+        </div>
+      </section>
+
+      <section className="container-page mt-12 grid lg:grid-cols-5 gap-10">
         {/* Info */}
         <div className="lg:col-span-2 space-y-4">
           <InfoCard icon={<Mail size={18} />} title="Email" body="hello@homeconnect.app" />
@@ -53,7 +78,7 @@ export default function ContactPage() {
             <Field label="First name" placeholder="Ada" />
             <Field label="Last name" placeholder="Okonkwo" />
             <Field label="Email" type="email" placeholder="you@email.com" />
-            <Field label="Topic" placeholder="Support / Partnerships / Press" />
+            <Field label="Topic" placeholder="Support / Artisan join / Partnerships / Press" />
           </div>
           <label className="block mt-4">
             <span className="text-xs uppercase tracking-widest text-muted-foreground">Message</span>

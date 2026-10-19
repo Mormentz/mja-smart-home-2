@@ -46,6 +46,7 @@ const mainNav: NavItem[] = [
   { href: "/properties", label: "Browse homes", icon: <Home size={18} />, roles: ["USER", "AGENT", "ARTISAN"] },
   { href: "/artisans", label: "Browse artisans", icon: <Wrench size={18} />, roles: ["USER", "AGENT"] },
   { href: "/dashboard/messages", label: "Messages", icon: <MessageSquare size={18} />, roles: ["USER", "AGENT", "ARTISAN", "ADMIN"] },
+  { href: "/dashboard/onboarding/artisan", label: "Onboarding", icon: <Wrench size={18} />, roles: ["ARTISAN"] },
   { href: "/dashboard/services", label: "Services", icon: <Wrench size={18} />, roles: ["ARTISAN"] },
 ];
 

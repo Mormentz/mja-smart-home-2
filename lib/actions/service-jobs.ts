@@ -153,25 +153,77 @@ export async function getArtisanJobs() {
   });
 }
 
-export async function listArtisans(opts?: { availableOnly?: boolean }) {
-  return prisma.user.findMany({
-    where: {
-      role: "ARTISAN",
-      active: true,
-      kycStatus: "VERIFIED",
-      serviceProfile: {
-        is: {
-          verificationStatus: "VERIFIED",
-          ...(opts?.availableOnly ? { available: true } : {}),
+export async function listArtisans(opts?: {
+  availableOnly?: boolean;
+  categorySlug?: string;
+  subcategorySlug?: string;
+  stateCode?: string;
+  areaName?: string;
+  q?: string;
+}) {
+  try {
+    const artisans = await prisma.user.findMany({
+      where: {
+        role: "ARTISAN",
+        active: true,
+        kycStatus: "VERIFIED",
+        ...(opts?.stateCode ? { stateCode: opts.stateCode } : {}),
+        ...(opts?.areaName ? { areaName: opts.areaName } : {}),
+        serviceProfile: {
+          is: {
+            ...(opts?.availableOnly ? { available: true } : {}),
+          },
+        },
+        ...(opts?.categorySlug || opts?.subcategorySlug
+          ? {
+              artisanServices: {
+                some: {
+                  subcategory: {
+                    ...(opts?.subcategorySlug ? { slug: opts.subcategorySlug } : {}),
+                    ...(opts?.categorySlug
+                      ? { category: { slug: opts.categorySlug } }
+                      : {}),
+                  },
+                },
+              },
+            }
+          : {}),
+      },
+      include: {
+        serviceProfile: true,
+        reviewsReceived: { select: { rating: true } },
+        artisanServices: {
+          include: {
+            subcategory: { include: { category: true } },
+          },
         },
       },
-    },
-    include: {
-      serviceProfile: true,
-      reviewsReceived: { select: { rating: true } },
-    },
-    orderBy: { name: "asc" },
-  });
+    });
+
+    const q = opts?.q?.trim().toLowerCase();
+    const filtered = q
+      ? artisans.filter((a) => {
+          const trades = a.artisanServices
+            .map((s) => `${s.subcategory.name} ${s.subcategory.category.name}`)
+            .join(" ");
+          const hay =
+            `${a.name ?? ""} ${a.email} ${a.serviceProfile?.trade ?? ""} ${a.serviceProfile?.bio ?? ""} ${a.areaName ?? ""} ${trades}`.toLowerCase();
+          return hay.includes(q);
+        })
+      : artisans;
+
+    // Tier 2/3 (STANDARD/ENHANCED) bubble up in directory sort
+    const rank = { ENHANCED: 0, STANDARD: 1, BASIC: 2 } as const;
+    return filtered.sort((a, b) => {
+      const ra = rank[a.kycLevel] ?? 2;
+      const rb = rank[b.kycLevel] ?? 2;
+      if (ra !== rb) return ra - rb;
+      return (a.name ?? "").localeCompare(b.name ?? "");
+    });
+  } catch {
+    // Avoid crashing marketing pages when Postgres is briefly unavailable
+    return [];
+  }
 }
 
 export async function getArtisanById(id: string) {

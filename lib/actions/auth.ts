@@ -1,10 +1,12 @@
 "use server";
 
 import bcrypt from "bcryptjs";
+import { randomBytes } from "crypto";
 import { KycLevel, Role, VerificationStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { sendVerificationEmail } from "@/lib/email/smtp";
 
 const registerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -19,10 +21,25 @@ function kycDefaults(role: "USER" | "AGENT" | "ARTISAN") {
   if (role === "AGENT") {
     return { kycLevel: KycLevel.STANDARD, kycStatus: VerificationStatus.PENDING };
   }
+  // Artisans start at Tier 1 (BASIC) unverified until onboarding KYC
   if (role === "ARTISAN") {
-    return { kycLevel: KycLevel.ENHANCED, kycStatus: VerificationStatus.PENDING };
+    return { kycLevel: KycLevel.BASIC, kycStatus: VerificationStatus.UNVERIFIED };
   }
   return { kycLevel: KycLevel.BASIC, kycStatus: VerificationStatus.UNVERIFIED };
+}
+
+async function issueEmailVerification(userId: string, email: string) {
+  const token = randomBytes(32).toString("hex");
+  await prisma.user.update({
+    where: { id: userId },
+    data: { emailVerifyToken: token },
+  });
+  try {
+    await sendVerificationEmail(email, token);
+  } catch (err) {
+    console.error("[email] verification send failed", err);
+  }
+  return token;
 }
 
 export async function registerUser(data: RegisterInput) {
@@ -42,29 +59,43 @@ export async function registerUser(data: RegisterInput) {
   const passwordHash = await bcrypt.hash(password, 12);
   const kyc = kycDefaults(role);
 
-  await prisma.user.create({
+  const created = await prisma.user.create({
     data: {
       name,
       email: normalizedEmail,
       passwordHash,
       role: role as Role,
+      onboardingStep: role === "ARTISAN" ? 1 : 0,
       ...kyc,
     },
   });
 
   if (role === "ARTISAN") {
-    const created = await prisma.user.findUnique({ where: { email: normalizedEmail } });
-    if (created) {
-      await prisma.serviceProfile.create({
-        data: {
-          userId: created.id,
-          trade: "General Services",
-          bio: "Tell clients about your trade and experience.",
-        },
-      });
-    }
+    await prisma.serviceProfile.create({
+      data: {
+        userId: created.id,
+        trade: "General Services",
+        bio: "Tell clients about your trade and experience.",
+        available: false,
+      },
+    });
   }
 
+  await issueEmailVerification(created.id, normalizedEmail);
+
+  return { success: true, needsEmailVerification: true as const };
+}
+
+export async function resendVerificationEmail() {
+  const { auth } = await import("@/auth");
+  const session = await auth();
+  if (!session?.user?.id) return { error: "Unauthorized" };
+
+  const user = await prisma.user.findUnique({ where: { id: session.user.id } });
+  if (!user) return { error: "User not found" };
+  if (user.emailVerified) return { success: true, alreadyVerified: true as const };
+
+  await issueEmailVerification(user.id, user.email);
   return { success: true };
 }
 

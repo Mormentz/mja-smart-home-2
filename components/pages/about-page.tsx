@@ -1,12 +1,16 @@
 "use client";
 
+import Link from "next/link";
 import { motion } from "framer-motion";
-import { Compass, Heart, Sparkles, Users } from "lucide-react";
+import { ArrowUpRight, Compass, Heart, Sparkles, Users } from "lucide-react";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { imageSrc } from "@/lib/utils";
+import { JOIN_BENEFITS } from "@/lib/artisans-content";
 import team from "@/assets/about-team.jpg";
 import living from "@/assets/hero-living.jpg";
+import artisansAtWork from "@/assets/artisans/artisans-at-work.jpg";
+import verifiedScene from "@/assets/artisans/artisans-verified-badge-scene.jpg";
 
 export default function AboutPage() {
   return (
@@ -74,6 +78,68 @@ export default function AboutPage() {
               <p className="mt-2 text-muted-foreground">{v.b}</p>
             </motion.div>
           ))}
+        </div>
+      </section>
+
+      {/* Artisans Hub story */}
+      <section className="container-page mt-24 md:mt-32">
+        <div className="grid items-center gap-10 lg:grid-cols-2">
+          <div>
+            <p className="text-sm uppercase tracking-[0.2em] text-primary/70">Artisans Hub</p>
+            <h2 className="mt-3 font-display text-4xl font-semibold text-balance md:text-5xl">
+              Homes need people who fix, finish, and care for them.
+            </h2>
+            <p className="mt-5 text-lg text-muted-foreground">
+              Moving in is only the beginning. HomeConnect Artisans Hub connects households with
+              verified electricians, plumbers, painters, AC technicians, and more — starting in{" "}
+              <strong className="font-semibold text-foreground">Abuja</strong>. Pros get fair pay via
+              escrow, skill badges, and real customer demand.
+            </p>
+            <ul className="mt-6 space-y-3 text-muted-foreground">
+              {JOIN_BENEFITS.slice(0, 3).map((b) => (
+                <li key={b.title}>
+                  <span className="font-semibold text-foreground">{b.title}.</span> {b.body}
+                </li>
+              ))}
+            </ul>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link
+                href="/artisans"
+                className="group inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3.5 font-semibold text-primary-foreground transition hover:brightness-110"
+              >
+                Browse artisans
+                <ArrowUpRight size={18} className="transition-transform group-hover:rotate-45" />
+              </Link>
+              <Link
+                href="/artisans/join"
+                className="inline-flex items-center gap-2 rounded-full border border-border px-6 py-3.5 font-semibold transition hover:bg-muted"
+              >
+                Become an artisan
+              </Link>
+            </div>
+          </div>
+          <div className="grid gap-4">
+            <div className="aspect-[16/10] overflow-hidden rounded-3xl shadow-elegant">
+              <img
+                src={imageSrc(artisansAtWork)}
+                alt="Artisans collaborating on a home job"
+                className="h-full w-full object-cover"
+                loading="lazy"
+                width={1400}
+                height={900}
+              />
+            </div>
+            <div className="aspect-[16/9] overflow-hidden rounded-3xl shadow-soft">
+              <img
+                src={imageSrc(verifiedScene)}
+                alt="Verified artisan professional"
+                className="h-full w-full object-cover"
+                loading="lazy"
+                width={1200}
+                height={675}
+              />
+            </div>
+          </div>
         </div>
       </section>
 

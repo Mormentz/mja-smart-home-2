@@ -14,8 +14,51 @@ import {
 } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { DEMO_PASSWORD, DEMO_USERS, SEED_AMENITIES, SEED_NEIGHBORHOODS, SEED_PROPERTIES } from "../lib/seed-data";
+import { TAXONOMY_CATEGORIES, slugify } from "../lib/services/taxonomy-data";
 
 const prisma = new PrismaClient();
+
+async function seedServiceTaxonomy() {
+  for (const cat of TAXONOMY_CATEGORIES) {
+    const category = await prisma.serviceCategory.upsert({
+      where: { slug: cat.slug },
+      create: {
+        slug: cat.slug,
+        name: cat.name,
+        groupName: cat.groupName,
+        icon: cat.icon,
+        isPrimary: cat.isPrimary,
+        sortOrder: cat.sortOrder,
+      },
+      update: {
+        name: cat.name,
+        groupName: cat.groupName,
+        icon: cat.icon,
+        isPrimary: cat.isPrimary,
+        sortOrder: cat.sortOrder,
+      },
+    });
+
+    let order = 0;
+    for (const subName of cat.subcategories) {
+      const slug = slugify(subName);
+      await prisma.serviceSubcategory.upsert({
+        where: { categoryId_slug: { categoryId: category.id, slug } },
+        create: {
+          categoryId: category.id,
+          slug,
+          name: subName,
+          sortOrder: order++,
+        },
+        update: {
+          name: subName,
+          sortOrder: order - 1,
+        },
+      });
+    }
+  }
+  console.log(`Seeded ${TAXONOMY_CATEGORIES.length} service categories`);
+}
 
 function kycForRole(role: Role): { kycLevel: KycLevel; kycStatus: VerificationStatus } {
   if (role === "ADMIN") return { kycLevel: KycLevel.ENHANCED, kycStatus: VerificationStatus.VERIFIED };
@@ -304,6 +347,12 @@ async function main() {
         "HomeConnect is the housing platform for verified homes, secure escrow rent, and trusted artisans.",
     },
   });
+
+  await seedServiceTaxonomy();
+
+  const { softMigrateArtisanTrades } = await import("../lib/services/migrate-trades");
+  const migrated = await softMigrateArtisanTrades();
+  console.log(`Soft-migrated ${migrated} artisan trade profiles into taxonomy`);
 
   void kycForRole;
   console.log("Seed complete.");

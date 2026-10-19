@@ -171,17 +171,38 @@ export async function decideKyc(userId: string, decision: "VERIFIED" | "REJECTED
   const session = await requireAdmin();
   if (!session) return { error: "Unauthorized" };
 
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) return { error: "User not found" };
+
   await prisma.user.update({
     where: { id: userId },
     data: {
       kycStatus: decision as VerificationStatus,
       kycNote: note ?? null,
+      ...(decision === "VERIFIED" && user.role === "ARTISAN"
+        ? { onboardingStep: Math.max(user.onboardingStep, 5) }
+        : {}),
     },
   });
+
+  if (user.role === "ARTISAN") {
+    await prisma.serviceProfile.updateMany({
+      where: { userId },
+      data:
+        decision === "VERIFIED"
+          ? { verified: true, verificationStatus: VerificationStatus.VERIFIED }
+          : {
+              available: false,
+              verified: false,
+              verificationStatus: VerificationStatus.REJECTED,
+            },
+    });
+  }
 
   revalidatePath("/dashboard/admin/users");
   revalidatePath("/dashboard/admin/verifications");
   revalidatePath("/dashboard/settings");
+  revalidatePath("/dashboard/services");
   return { success: true };
 }
 

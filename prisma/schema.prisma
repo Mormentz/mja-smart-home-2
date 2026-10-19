@@ -99,21 +99,37 @@ enum MoveInStatus {
   CANCELLED
 }
 
+enum KycDocType {
+  SELFIE
+  ID_FRONT
+  PROOF_OF_ADDRESS
+  CAC
+}
+
 model User {
-  id            String              @id @default(cuid())
-  name          String?
-  email         String              @unique
-  emailVerified DateTime?
-  image         String?
-  passwordHash  String?
-  role          Role                @default(USER)
-  active        Boolean             @default(true)
-  phone         String?
-  kycLevel      KycLevel            @default(BASIC)
-  kycStatus     VerificationStatus  @default(UNVERIFIED)
-  kycNote       String?
-  createdAt     DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
+  id               String              @id @default(cuid())
+  name             String?
+  email            String              @unique
+  emailVerified    DateTime?
+  emailVerifyToken String?
+  image            String?
+  passwordHash     String?
+  role             Role                @default(USER)
+  active           Boolean             @default(true)
+  phone            String?
+  stateCode        String?
+  lgaName          String?
+  areaName         String?
+  lat              Float?
+  lng              Float?
+  nin              String?
+  bvn              String?
+  onboardingStep   Int                 @default(0)
+  kycLevel         KycLevel            @default(BASIC)
+  kycStatus        VerificationStatus  @default(UNVERIFIED)
+  kycNote          String?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
 
   accounts           Account[]
   sessions           Session[]
@@ -122,6 +138,8 @@ model User {
   sentMessages       Message[]       @relation("SentMessages")
   receivedMessages   Message[]       @relation("ReceivedMessages")
   serviceProfile     ServiceProfile?
+  artisanServices    ArtisanService[]
+  kycDocuments       KycDocument[]
   leasesAsRenter     Lease[]         @relation("LeaseRenter")
   leasesAsLandlord   Lease[]         @relation("LeaseLandlord")
   escrowPayments     EscrowPayment[] @relation("EscrowPayer")
@@ -131,6 +149,68 @@ model User {
   reviewsReceived    Review[]        @relation("ReviewTarget")
   savedProperties    SavedProperty[]
   moveInRequests     MoveInRequest[]
+}
+
+model ServiceCategory {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  name      String
+  groupName String
+  icon      String   @default("wrench")
+  isPrimary Boolean  @default(false)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subcategories ServiceSubcategory[]
+}
+
+model ServiceSubcategory {
+  id         String   @id @default(cuid())
+  categoryId String
+  slug       String
+  name       String
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  category ServiceCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  artisans ArtisanService[]
+
+  @@unique([categoryId, slug])
+  @@index([categoryId])
+}
+
+model ArtisanService {
+  id             String   @id @default(cuid())
+  userId         String
+  subcategoryId  String
+  note           String?
+  createdAt      DateTime @default(now())
+
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subcategory  ServiceSubcategory @relation(fields: [subcategoryId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, subcategoryId])
+  @@index([userId])
+  @@index([subcategoryId])
+}
+
+model KycDocument {
+  id        String             @id @default(cuid())
+  userId    String
+  tier      Int
+  type      KycDocType
+  url       String
+  status    VerificationStatus @default(PENDING)
+  note      String?
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
 }
 
 model SiteContent {
@@ -291,7 +371,7 @@ model ServiceProfile {
   verified         Boolean            @default(false)
   verificationStatus VerificationStatus @default(UNVERIFIED)
   skillBadge       SkillBadge         @default(NONE)
-  available        Boolean            @default(true)
+  available        Boolean            @default(false)
   hourlyRate       Int                @default(50)
   serviceArea      String?
   createdAt        DateTime           @default(now())

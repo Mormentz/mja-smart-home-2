@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowUpRight, Compass, Heart, KeyRound, MapPin, Quote, Search, Sparkles, ShieldCheck, Users } from "lucide-react";
+import { ArrowUpRight, Compass, Heart, KeyRound, MapPin, Quote, Search, Sparkles, ShieldCheck, Users, Wrench } from "lucide-react";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import {
@@ -13,15 +13,29 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { imageSrc } from "@/lib/utils";
-import heroLiving from "@/assets/hero-living.jpg";
-import heroBedroom from "@/assets/hero-bedroom.jpg";
-import aboutTeam from "@/assets/about-team.jpg";
+import { HIRE_BENEFITS } from "@/lib/artisans-content";
+import artisansHero from "@/assets/artisans/artisans-hero-group.jpg";
+import artisansAtWork from "@/assets/artisans/artisans-at-work.jpg";
+import artisansTeamOutdoors from "@/assets/artisans/artisans-team-outdoors.jpg";
+import verifiedArtisan from "@/assets/artisans/artisans-verified-badge-scene.jpg";
+import electrician from "@/assets/artisans/artisan-electrician.jpg";
+import plumber from "@/assets/artisans/artisan-plumber.jpg";
+import painter from "@/assets/artisans/artisan-painter.jpg";
+import acTech from "@/assets/artisans/artisan-ac-tech.jpg";
+import carpenter from "@/assets/artisans/artisan-carpenter.jpg";
+import tiler from "@/assets/artisans/artisan-tiler.jpg";
+import cleaner from "@/assets/artisans/artisan-cleaner.jpg";
+import welder from "@/assets/artisans/artisan-welder.jpg";
+import cctv from "@/assets/artisans/artisan-cctv.jpg";
+import detailHands from "@/assets/artisans/artisan-detail-hands.jpg";
 
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       <Hero />
       <Stats />
+      <ArtisansPillar />
+      <TradeMosaic />
       <Mission />
       <HowItWorks />
       <Ecosystem />
@@ -54,8 +68,8 @@ function Hero() {
                 transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
                 className="inline-flex items-center gap-2 self-start px-4 py-2 rounded-full border border-ink-foreground/15 text-sm text-ink-foreground/80"
               >
-                <Sparkles size={14} className="text-success" />
-                Smart AI search now live
+                <Wrench size={14} className="text-success" />
+                Artisans Hub live in Abuja
               </motion.div>
 
               <motion.h1
@@ -64,9 +78,9 @@ function Hero() {
                 transition={{ duration: 0.8, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
                 className="mt-6 font-display font-semibold text-[42px] leading-[1.05] md:text-6xl lg:text-7xl text-balance"
               >
-                Imagine a home <br className="hidden md:block" />
-                that <span className="text-success">finds you</span> — <br className="hidden md:block" />
-                before you find it.
+                Find a home. <br className="hidden md:block" />
+                Hire the <span className="text-success">pros</span> who <br className="hidden md:block" />
+                keep it running.
               </motion.h1>
 
               <motion.p
@@ -75,8 +89,8 @@ function Hero() {
                 transition={{ duration: 0.8, delay: 0.25 }}
                 className="mt-6 max-w-lg text-ink-foreground/70 text-lg"
               >
-                HomeConnect is the housing platform for the way you actually live. Discover verified listings,
-                trusted artisans and smart neighborhoods — all in one place.
+                HomeConnect is homes plus verified artisans — electricians, plumbers, painters, AC techs
+                and more — with escrow booking, chat, and neighborhood intel in one place.
               </motion.p>
 
               <motion.div
@@ -86,17 +100,23 @@ function Hero() {
                 className="mt-10 flex flex-wrap gap-3"
               >
                 <Link
-                  href="/about"
+                  href="/artisans"
                   className="group inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-success text-ink font-semibold hover:brightness-105 transition shadow-soft"
                 >
-                  How it works
+                  Hire artisans
                   <ArrowUpRight size={18} className="group-hover:rotate-45 transition-transform" />
+                </Link>
+                <Link
+                  href="/artisans/join"
+                  className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full border border-ink-foreground/20 hover:bg-ink-foreground/5 transition"
+                >
+                  Become an artisan
                 </Link>
                 <Link
                   href="/properties"
                   className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full border border-ink-foreground/20 hover:bg-ink-foreground/5 transition"
                 >
-                  Browse Properties
+                  Browse homes
                 </Link>
               </motion.div>
 
@@ -104,7 +124,7 @@ function Hero() {
               <div className="mt-16 w-40 h-16 bg-grid-dots opacity-70 hidden md:block" />
             </div>
 
-            {/* Floating images */}
+            {/* Floating images — artisan-led */}
             <div className="lg:col-span-5 relative min-h-[240px] sm:min-h-[320px] lg:min-h-0 lg:h-full">
               <motion.div
                 initial={{ opacity: 0, y: 40, scale: 0.96 }}
@@ -112,7 +132,7 @@ function Hero() {
                 transition={{ duration: 0.9, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
                 className="absolute top-0 right-0 w-[78%] aspect-[4/5] rounded-3xl overflow-hidden shadow-float"
               >
-                <img src={imageSrc(heroLiving)} alt="Modern living room" className="w-full h-full object-cover" width={1200} height={1400} />
+                <img src={imageSrc(artisansHero)} alt="Verified HomeConnect artisans" className="w-full h-full object-cover" width={1200} height={1400} />
               </motion.div>
               <motion.div
                 initial={{ opacity: 0, y: 40, scale: 0.96 }}
@@ -120,10 +140,9 @@ function Hero() {
                 transition={{ duration: 0.9, delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
                 className="absolute bottom-0 left-0 w-[62%] aspect-[5/4] rounded-3xl overflow-hidden shadow-float border-4 border-ink"
               >
-                <img src={imageSrc(heroBedroom)} alt="Bedroom" className="w-full h-full object-cover" width={1000} height={800} loading="lazy" />
+                <img src={imageSrc(electrician)} alt="Electrician at work" className="w-full h-full object-cover" width={1000} height={800} loading="lazy" />
               </motion.div>
 
-              {/* floating info card */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -134,8 +153,8 @@ function Hero() {
                   <ShieldCheck size={20} />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Verified listings</p>
-                  <p className="font-semibold">12,400+ homes</p>
+                  <p className="text-xs text-muted-foreground">Verified professionals</p>
+                  <p className="font-semibold">Artisans Hub · Abuja</p>
                 </div>
               </motion.div>
             </div>
@@ -174,10 +193,10 @@ function SearchField({ label, placeholder }: { label: string; placeholder: strin
 /* ------------------------------- STATS ---------------------------------- */
 function Stats() {
   const stats = [
-    { n: "12k+", l: "Verified listings" },
-    { n: "48", l: "Cities covered" },
-    { n: "2,800", l: "Trusted artisans" },
-    { n: "98%", l: "Happy movers" },
+    { n: "2,800+", l: "Trusted artisans" },
+    { n: "12+", l: "Trades covered" },
+    { n: "Abuja", l: "Launch market" },
+    { n: "Escrow", l: "Secure job pay" },
   ];
   return (
     <section className="container-page mt-20 md:mt-28">
@@ -211,7 +230,14 @@ function Mission() {
         transition={{ duration: 0.7 }}
         className="aspect-[5/4] rounded-3xl overflow-hidden shadow-elegant order-2 lg:order-1"
       >
-        <img src={imageSrc(aboutTeam)} alt="The HomeConnect team" className="w-full h-full object-cover" loading="lazy" width={1400} height={1000} />
+        <img
+          src={imageSrc(verifiedArtisan)}
+          alt="Verified HomeConnect artisan"
+          className="w-full h-full object-cover"
+          loading="lazy"
+          width={1400}
+          height={1000}
+        />
       </motion.div>
       <div className="order-1 lg:order-2">
         <p className="text-sm uppercase tracking-[0.2em] text-primary/70">Who we are</p>
@@ -335,6 +361,175 @@ function Values() {
   );
 }
 
+/* --------------------------- ARTISANS PILLAR ---------------------------- */
+function ArtisansPillar() {
+  return (
+    <section className="mt-16 md:mt-24">
+      <div className="relative overflow-hidden bg-ink text-ink-foreground">
+        <img
+          src={imageSrc(artisansTeamOutdoors)}
+          alt="HomeConnect artisans on a job site"
+          className="absolute inset-0 h-full w-full object-cover opacity-40"
+          width={1600}
+          height={900}
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/88 to-ink/50" />
+        <div className="relative container-page grid gap-10 py-16 md:py-24 lg:grid-cols-2 lg:items-center">
+          <div>
+            <p className="inline-flex items-center gap-2 text-sm uppercase tracking-[0.2em] text-ink-foreground/65">
+              <Wrench size={14} /> Artisans Hub
+            </p>
+            <h2 className="mt-4 font-display text-4xl font-semibold text-balance md:text-5xl">
+              Abuja&apos;s trusted network of{" "}
+              <span className="text-success">verified professionals</span>.
+            </h2>
+            <p className="mt-5 max-w-lg text-lg text-ink-foreground/75">
+              Book electricians, plumbers, painters, carpenters, AC techs and more with escrow and
+              in-app chat — or join as a pro and get matched with real customers.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link
+                href="/artisans"
+                className="group inline-flex items-center gap-2 rounded-full bg-success px-6 py-3.5 font-semibold text-ink transition hover:brightness-105"
+              >
+                Browse Artisans Hub
+                <ArrowUpRight size={18} className="transition-transform group-hover:rotate-45" />
+              </Link>
+              <Link
+                href="/artisans/join"
+                className="inline-flex items-center gap-2 rounded-full border border-ink-foreground/25 px-6 py-3.5 transition hover:bg-ink-foreground/5"
+              >
+                Register as an artisan
+              </Link>
+            </div>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {HIRE_BENEFITS.map((b) => (
+              <div
+                key={b.title}
+                className="rounded-2xl border border-ink-foreground/15 bg-ink-foreground/5 p-5 backdrop-blur-sm"
+              >
+                <h3 className="font-display text-base font-semibold">{b.title}</h3>
+                <p className="mt-2 text-sm text-ink-foreground/70">{b.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ---------------------------- TRADE MOSAIC ------------------------------ */
+function TradeMosaic() {
+  const primaryLinks = [
+    { label: "Electrical", slug: "electrical" },
+    { label: "Plumbing", slug: "plumbing" },
+    { label: "AC", slug: "ac-refrigeration" },
+    { label: "Solar", slug: "solar" },
+    { label: "Generator", slug: "generator" },
+    { label: "Carpentry", slug: "carpentry" },
+    { label: "Painting", slug: "painting" },
+    { label: "Tiling", slug: "tiling" },
+    { label: "POP", slug: "pop-ceiling" },
+    { label: "Welding", slug: "welding" },
+    { label: "Aluminium", slug: "aluminium-glass" },
+    { label: "Cleaning", slug: "cleaning" },
+  ];
+
+  const tiles = [
+    { label: "Electrical", slug: "electrical", img: electrician },
+    { label: "Plumbing", slug: "plumbing", img: plumber },
+    { label: "AC & Cooling", slug: "ac-refrigeration", img: acTech },
+    { label: "Painting", slug: "painting", img: painter },
+    { label: "Carpentry", slug: "carpentry", img: carpenter },
+    { label: "Tiling", slug: "tiling", img: tiler },
+    { label: "Welding", slug: "welding", img: welder },
+    { label: "Cleaning", slug: "cleaning", img: cleaner },
+    { label: "CCTV", slug: "cctv-security", img: cctv },
+  ];
+
+  return (
+    <section className="container-page mt-16 md:mt-20">
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div className="max-w-xl">
+          <p className="text-sm uppercase tracking-[0.2em] text-primary/70">Who you can hire</p>
+          <h2 className="mt-2 font-display text-3xl font-semibold md:text-4xl">
+            Every trade your home needs.
+          </h2>
+          <p className="mt-3 text-muted-foreground">
+            12 primary service groups on the homepage — filter the full taxonomy in Artisans Hub.
+          </p>
+        </div>
+        <Link
+          href="/signup/artisan"
+          className="text-sm font-semibold text-primary hover:underline"
+        >
+          Are you a pro? Join the hub →
+        </Link>
+      </div>
+
+      <div className="mt-6 flex flex-wrap gap-2">
+        {primaryLinks.map((c) => (
+          <Link
+            key={c.slug}
+            href={`/artisans?category=${c.slug}`}
+            className="rounded-full bg-muted px-3 py-1.5 text-xs font-medium text-muted-foreground transition hover:bg-ink hover:text-ink-foreground"
+          >
+            {c.label}
+          </Link>
+        ))}
+      </div>
+
+      <div className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+        {tiles.map((t, i) => (
+          <Link
+            key={t.slug}
+            href={`/artisans?category=${t.slug}`}
+            className={`relative overflow-hidden rounded-2xl ${
+              i === 0 ? "col-span-2 aspect-[2/1] md:aspect-[21/9]" : "aspect-[4/3]"
+            }`}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: Math.min(i * 0.04, 0.3) }}
+              className="absolute inset-0"
+            >
+              <img
+                src={imageSrc(t.img)}
+                alt={t.label}
+                className="h-full w-full object-cover"
+                loading="lazy"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/20 to-transparent" />
+              <p className="absolute bottom-3 left-3 font-display text-sm font-semibold text-white md:text-base">
+                {t.label}
+              </p>
+            </motion.div>
+          </Link>
+        ))}
+        <Link
+          href="/artisans"
+          className="relative flex aspect-[4/3] flex-col justify-end overflow-hidden rounded-2xl bg-primary p-5 text-primary-foreground transition hover:brightness-110"
+        >
+          <img
+            src={imageSrc(detailHands)}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover opacity-25"
+            aria-hidden
+          />
+          <p className="relative font-display text-lg font-semibold">See all trades</p>
+          <p className="relative mt-1 text-sm text-primary-foreground/80">
+            25 categories · escrow booking
+          </p>
+        </Link>
+      </div>
+    </section>
+  );
+}
+
 /* ----------------------------- EXPLORE CTA ------------------------------ */
 function ExploreCTA() {
   return (
@@ -344,32 +539,48 @@ function ExploreCTA() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.7 }}
-        className="rounded-4xl bg-secondary/40 p-10 md:p-16 grid lg:grid-cols-2 gap-8 items-center"
+        className="grid items-center gap-8 overflow-hidden rounded-4xl bg-secondary/40 lg:grid-cols-2"
       >
-        <div>
+        <div className="p-10 md:p-16">
           <p className="text-sm uppercase tracking-[0.2em] text-primary/70">Ready when you are</p>
-          <h2 className="mt-3 font-display text-3xl md:text-4xl font-semibold text-balance">
-            Thousands of verified homes are waiting — but first, get to know us.
+          <h2 className="mt-3 font-display text-3xl font-semibold text-balance md:text-4xl">
+            Homes to find. Pros to hire. One platform.
           </h2>
-          <p className="mt-4 text-muted-foreground text-lg">
-            When you're ready to browse, every listing comes with neighborhood intel, verified landlords,
-            and the full HomeConnect ecosystem behind it.
+          <p className="mt-4 text-lg text-muted-foreground">
+            Browse verified listings, hire artisans with escrow, or join Artisans Hub if you&apos;re a
+            professional in Abuja.
           </p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link
+              href="/artisans"
+              className="group inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3.5 font-semibold text-primary-foreground transition hover:brightness-110"
+            >
+              Hire artisans
+              <ArrowUpRight size={18} className="transition-transform group-hover:rotate-45" />
+            </Link>
+            <Link
+              href="/artisans/join"
+              className="inline-flex items-center gap-2 rounded-full border border-border px-6 py-3.5 font-semibold transition hover:bg-muted"
+            >
+              Become an artisan
+            </Link>
+            <Link
+              href="/properties"
+              className="inline-flex items-center gap-2 rounded-full border border-border px-6 py-3.5 font-semibold transition hover:bg-muted"
+            >
+              Browse homes
+            </Link>
+          </div>
         </div>
-        <div className="flex flex-wrap gap-3 lg:justify-end">
-          <Link
-            href="/about"
-            className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full border border-border hover:bg-muted transition font-semibold"
-          >
-            Learn more about us
-          </Link>
-          <Link
-            href="/properties"
-            className="group inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-primary text-primary-foreground font-semibold hover:brightness-110 transition"
-          >
-            Browse properties
-            <ArrowUpRight size={18} className="group-hover:rotate-45 transition-transform" />
-          </Link>
+        <div className="min-h-[240px] lg:min-h-full">
+          <img
+            src={imageSrc(carpenter)}
+            alt="Carpenter at work"
+            className="h-full min-h-[240px] w-full object-cover"
+            loading="lazy"
+            width={1400}
+            height={1050}
+          />
         </div>
       </motion.div>
     </section>
@@ -379,49 +590,64 @@ function ExploreCTA() {
 /* ----------------------------- ECOSYSTEM -------------------------------- */
 function Ecosystem() {
   const items = [
-    { icon: Search, title: "Smart AI Search", body: "Describe your dream home in plain words. Our AI matches it in seconds." },
-    { icon: Users, title: "Trusted Artisans", body: "Vetted plumbers, electricians and cleaners — booked in one tap." },
-    { icon: MapPin, title: "Neighborhood Index", body: "Safety, schools, commute and vibe — scored for every block." },
-    { icon: ShieldCheck, title: "Verified Landlords", body: "Every listing is verified. No ghost apartments, no surprises." },
+    { icon: Search, title: "Smart AI Search", body: "Describe your dream home in plain words. Our AI matches it in seconds.", href: "/properties" },
+    { icon: Users, title: "Trusted Artisans", body: "Vetted plumbers, electricians and cleaners — booked in one tap.", href: "/artisans" },
+    { icon: MapPin, title: "Neighborhood Index", body: "Safety, schools, commute and vibe — scored for every block.", href: "/properties" },
+    { icon: ShieldCheck, title: "Verified Landlords", body: "Every listing is verified. No ghost apartments, no surprises.", href: "/properties" },
   ];
   return (
     <section className="container-page mt-24 md:mt-32">
-      <div className="grid lg:grid-cols-12 gap-10 items-start">
-        <div className="lg:col-span-5 lg:sticky lg:top-24">
-          <p className="text-sm uppercase tracking-[0.2em] text-primary/70">The Ecosystem</p>
-          <h2 className="mt-3 font-display text-4xl md:text-5xl font-semibold text-balance">
-            One platform. Every part of moving in.
-          </h2>
-          <p className="mt-5 text-muted-foreground text-lg max-w-md">
-            HomeConnect isn't just listings. It's the whole journey — search, tour, sign, move, live.
-          </p>
-          <Link
-            href="/contact"
-            className="group mt-6 inline-flex items-center gap-2 text-primary font-semibold hover:gap-3 transition-all"
-          >
-            Talk to our team <ArrowUpRight size={18} className="group-hover:rotate-45 transition-transform" />
-          </Link>
-          <div className="mt-8 aspect-[5/4] rounded-3xl overflow-hidden shadow-soft">
-            <img src={imageSrc(aboutTeam)} alt="Team" className="w-full h-full object-cover" loading="lazy" width={1400} height={1000} />
+      <div className="max-w-2xl">
+        <p className="text-sm uppercase tracking-[0.2em] text-primary/70">The Ecosystem</p>
+        <h2 className="mt-3 font-display text-4xl font-semibold text-balance md:text-5xl">
+          One platform. Every part of moving in.
+        </h2>
+        <p className="mt-5 text-lg text-muted-foreground">
+          HomeConnect isn&apos;t just listings. It&apos;s the whole journey — search, tour, sign, move, live
+          — with artisans on call when something needs fixing.
+        </p>
+        <Link
+          href="/artisans"
+          className="group mt-6 inline-flex items-center gap-2 font-semibold text-primary transition-all hover:gap-3"
+        >
+          Explore Artisans Hub{" "}
+          <ArrowUpRight size={18} className="transition-transform group-hover:rotate-45" />
+        </Link>
+      </div>
+
+      <div className="mt-10 grid min-w-0 gap-6 lg:grid-cols-12 lg:items-stretch">
+        <div className="min-w-0 lg:col-span-5">
+          <div className="relative aspect-[4/3] w-full max-h-[420px] overflow-hidden rounded-3xl shadow-soft lg:h-full lg:max-h-none lg:min-h-[320px] lg:aspect-auto">
+            <img
+              src={imageSrc(artisansAtWork)}
+              alt="Artisans at work"
+              className="absolute inset-0 h-full w-full object-cover"
+              loading="lazy"
+              width={1400}
+              height={900}
+            />
           </div>
         </div>
 
-        <div className="lg:col-span-7 grid sm:grid-cols-2 gap-4">
+        <div className="min-w-0 grid gap-4 sm:grid-cols-2 lg:col-span-7">
           {items.map((it, i) => (
-            <motion.div
-              key={it.title}
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: i * 0.08 }}
-              className="rounded-3xl p-8 bg-muted hover:bg-primary hover:text-primary-foreground transition-colors group"
-            >
-              <div className="grid place-items-center w-12 h-12 rounded-2xl bg-background text-primary group-hover:bg-success group-hover:text-ink transition">
-                <it.icon size={20} />
-              </div>
-              <h3 className="mt-5 font-display text-xl font-semibold">{it.title}</h3>
-              <p className="mt-2 text-muted-foreground group-hover:text-primary-foreground/80 transition-colors">{it.body}</p>
-            </motion.div>
+            <Link key={it.title} href={it.href} className="block min-w-0">
+              <motion.div
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.08 }}
+                className="group h-full rounded-3xl bg-muted p-8 transition-colors hover:bg-primary hover:text-primary-foreground"
+              >
+                <div className="grid h-12 w-12 place-items-center rounded-2xl bg-background text-primary transition group-hover:bg-success group-hover:text-ink">
+                  <it.icon size={20} />
+                </div>
+                <h3 className="mt-5 font-display text-xl font-semibold">{it.title}</h3>
+                <p className="mt-2 text-muted-foreground transition-colors group-hover:text-primary-foreground/80">
+                  {it.body}
+                </p>
+              </motion.div>
+            </Link>
           ))}
         </div>
       </div>
@@ -432,40 +658,40 @@ function Ecosystem() {
 /* --------------------------- TESTIMONIALS ------------------------------- */
 const testimonials = [
   {
-    quote: "We found our apartment, booked a mover and signed the lease — all inside HomeConnect.",
+    quote: "Booked a verified electrician the day we got the keys. Escrow made paying feel safe.",
+    name: "Chioma A.",
+    detail: "Homeowner · Abuja",
+    initials: "CA",
+  },
+  {
+    quote: "As a plumber on Artisans Hub I get real jobs — not endless bidding. Clients already trust the badge.",
+    name: "Ibrahim S.",
+    detail: "Artisan · Abuja",
+    initials: "IS",
+  },
+  {
+    quote: "We found our apartment, then hired a painter and AC tech without leaving HomeConnect.",
     name: "Amaka O.",
-    detail: "Moved in April 2026 · Lagos",
+    detail: "Renter · Abuja",
     initials: "AO",
   },
   {
     quote: "The neighborhood scores alone saved us weeks of research. We knew exactly what we were getting into.",
     name: "Daniel K.",
-    detail: "Renter · Nairobi",
+    detail: "Renter · Abuja",
     initials: "DK",
   },
   {
-    quote: "As a landlord, verified profiles mean fewer no-shows and better tenants. It's changed how I list.",
-    name: "Priya M.",
-    detail: "Landlord · Mumbai",
-    initials: "PM",
+    quote: "Skill badges and reviews helped me grow from weekend jobs to a full book of clients.",
+    name: "Blessing E.",
+    detail: "Artisan · Painter",
+    initials: "BE",
   },
   {
-    quote: "Booked an electrician through the app the day we moved in. That alone was worth it.",
-    name: "James T.",
-    detail: "Buyer · Austin",
-    initials: "JT",
-  },
-  {
-    quote: "I described my dream flat in one sentence and had three great matches before lunch.",
-    name: "Sofia R.",
-    detail: "Renter · Barcelona",
-    initials: "SR",
-  },
-  {
-    quote: "Finally, a housing platform that treats moving like a real life event — not just a transaction.",
-    name: "Marcus L.",
-    detail: "Moved in March 2026 · London",
-    initials: "ML",
+    quote: "Finally a platform that treats moving — and the pros who finish the home — as one journey.",
+    name: "Tunde M.",
+    detail: "Buyer · Abuja",
+    initials: "TM",
   },
 ] as const;
 

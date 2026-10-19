@@ -2,6 +2,7 @@
 
 import { decideArtisanVerification, decidePropertyVerification } from "@/lib/actions/verification";
 import { decideKyc } from "@/lib/actions/admin";
+import { decideKycDocument } from "@/lib/actions/kyc";
 import { Button } from "@/components/ui/button";
 import { DashboardPanel } from "@/components/dashboard/dashboard-panel";
 import { toast } from "sonner";
@@ -28,18 +29,70 @@ type PendingKyc = {
   phone: string | null;
 };
 
+type PendingKycDoc = {
+  id: string;
+  tier: number;
+  type: string;
+  url: string;
+  user: {
+    id: string;
+    name: string | null;
+    email: string;
+    role: string;
+    phone: string | null;
+    nin: string | null;
+    kycLevel: string;
+    stateCode: string | null;
+    lgaName: string | null;
+    areaName: string | null;
+  };
+};
+
 export function AdminVerificationQueues({
   properties,
   artisans,
   kycUsers,
+  kycDocuments,
 }: {
   properties: PendingProperty[];
   artisans: PendingArtisan[];
   kycUsers: PendingKyc[];
+  kycDocuments: PendingKycDoc[];
 }) {
   return (
-    <div className="grid gap-3 xl:grid-cols-3">
-      <QueueColumn title="KYC" empty="No KYC pending.">
+    <div className="grid gap-3 xl:grid-cols-2 2xl:grid-cols-4">
+      <QueueColumn title="KYC docs (Tier 1–3)" empty="No KYC documents pending.">
+        {kycDocuments.map((d) => (
+          <QueueItem
+            key={d.id}
+            title={`${d.user.name ?? d.user.email} · T${d.tier}`}
+            meta={`${d.type} · ${d.user.phone ?? "no phone"} · NIN ${d.user.nin ?? "—"} · ${[d.user.areaName, d.user.lgaName, d.user.stateCode].filter(Boolean).join(", ") || "no area"}`}
+            extra={
+              <a
+                href={d.url}
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs font-medium text-primary underline"
+              >
+                Open file
+              </a>
+            }
+            onApprove={async () => {
+              const r = await decideKycDocument(d.id, "VERIFIED");
+              if (r.error) toast.error(r.error);
+              else toast.success("Document approved");
+            }}
+            onReject={async () => {
+              const note = window.prompt("Rejection note (optional)") ?? undefined;
+              const r = await decideKycDocument(d.id, "REJECTED", note || undefined);
+              if (r.error) toast.error(r.error);
+              else toast.success("Document rejected");
+            }}
+          />
+        ))}
+      </QueueColumn>
+
+      <QueueColumn title="KYC profiles" empty="No KYC pending.">
         {kycUsers.map((u) => (
           <QueueItem
             key={u.id}
@@ -118,7 +171,7 @@ function QueueColumn({
     <DashboardPanel title={title}>
       <div className="max-h-[420px] space-y-2 overflow-y-auto">
         {count === 0 ? (
-          <p className="text-xs text-muted-foreground">{empty}</p>
+          <p className="text-sm text-muted-foreground">{empty}</p>
         ) : (
           children
         )}
@@ -130,29 +183,31 @@ function QueueColumn({
 function QueueItem({
   title,
   meta,
+  extra,
   onApprove,
   onReject,
 }: {
   title: string;
   meta: string;
+  extra?: React.ReactNode;
   onApprove: () => Promise<void>;
   onReject: () => Promise<void>;
 }) {
   return (
-    <div className="rounded-lg border border-border/60 p-2.5">
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <p className="truncate text-sm font-medium leading-tight">{title}</p>
-          <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{meta}</p>
-        </div>
-        <div className="flex shrink-0 gap-1">
-          <Button size="sm" className="h-7 px-2 text-xs" onClick={onApprove}>
-            Approve
-          </Button>
-          <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={onReject}>
-            Reject
-          </Button>
-        </div>
+    <div className="rounded-xl border border-border/70 p-3">
+      <p className="text-sm font-medium">{title}</p>
+      <p className="mt-0.5 text-xs text-muted-foreground">{meta}</p>
+      {extra && <div className="mt-2">{extra}</div>}
+      <div className="mt-3 flex gap-2">
+        <Button
+          size="sm"
+          onClick={() => void onApprove()}
+        >
+          Approve
+        </Button>
+        <Button size="sm" variant="secondary" onClick={() => void onReject()}>
+          Reject
+        </Button>
       </div>
     </div>
   );

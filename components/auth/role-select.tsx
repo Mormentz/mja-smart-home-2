@@ -9,7 +9,7 @@ const ROLES: Role[] = ["USER", "AGENT", "ARTISAN"];
 const roleDescriptions: Record<Role, string> = {
   USER: "Rent or buy homes, use escrow, and hire artisans",
   AGENT: "List properties for sale or rent (includes landlords)",
-  ARTISAN: "Offer verified home services",
+  ARTISAN: "Join Artisans Hub — verified jobs & escrow pay",
   ADMIN: "Manage the full platform",
 };
 

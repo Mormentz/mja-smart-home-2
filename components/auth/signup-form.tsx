@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Eye, EyeOff, Lock, Mail, User } from "lucide-react";
 import { signIn } from "next-auth/react";
@@ -11,20 +11,41 @@ import { AuthDivider, AuthField, AuthPrimaryButton } from "@/components/auth/aut
 import { GoogleAuthButton } from "@/components/auth/google-auth-button";
 import { Checkbox } from "@/components/ui/checkbox";
 
-const ROLES = ["USER", "AGENT", "ARTISAN"] as const;
+const ROLES = ["USER", "AGENT"] as const;
 type SignupRole = (typeof ROLES)[number];
+
+function parseRole(value: string | null): SignupRole | "ARTISAN" {
+  if (value === "ARTISAN") return "ARTISAN";
+  if (value && (ROLES as readonly string[]).includes(value)) {
+    return value as SignupRole;
+  }
+  return "USER";
+}
 
 export function SignupForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<SignupRole>("USER");
+  const [role, setRole] = useState<SignupRole>(() => {
+    const parsed = parseRole(searchParams.get("role"));
+    return parsed === "ARTISAN" ? "USER" : parsed;
+  });
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [hasGoogle, setHasGoogle] = useState(false);
+
+  useEffect(() => {
+    const next = parseRole(searchParams.get("role"));
+    if (next === "ARTISAN") {
+      router.replace("/signup/artisan");
+      return;
+    }
+    setRole(next);
+  }, [searchParams, router]);
 
   useEffect(() => {
     fetch("/api/auth/providers")
@@ -142,7 +163,12 @@ export function SignupForm() {
         <p className="text-xs text-muted-foreground">
           {role === "USER" && "Rent or buy homes, use escrow, and hire artisans."}
           {role === "AGENT" && "List properties for sale or rent (covers landlords)."}
-          {role === "ARTISAN" && "Offer verified home services."}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Are you a trade pro?{" "}
+          <Link href="/signup/artisan" className="font-semibold text-ink underline-offset-2 hover:underline">
+            Join Artisans Hub
+          </Link>
         </p>
       </div>
 

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { AuthLayout } from "@/components/auth/auth-layout";
 import { SignupForm } from "@/components/auth/signup-form";
 
@@ -12,7 +13,9 @@ export default function SignupPage() {
       title="Create your account"
       subtitle="Let's get started with your HomeConnect journey."
     >
-      <SignupForm />
+      <Suspense fallback={<div className="h-40 animate-pulse rounded-2xl bg-muted" />}>
+        <SignupForm />
+      </Suspense>
     </AuthLayout>
   );
 }

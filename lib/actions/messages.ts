@@ -301,12 +301,10 @@ export async function updateServiceProfile(data: {
     include: { serviceProfile: true },
   });
 
+  // Tier 1 KYC (user.kycStatus VERIFIED) required before going available / listing
+  const tier1Ok = user?.kycStatus === "VERIFIED";
   let available = data.available;
-  if (
-    available &&
-    user &&
-    (user.kycStatus !== "VERIFIED" || !user.serviceProfile?.verified)
-  ) {
+  if (available && !tier1Ok) {
     available = false;
   }
 
@@ -323,16 +321,13 @@ export async function updateServiceProfile(data: {
       userId: session.user.id,
       trade,
       bio,
-      available: available ?? true,
+      available: available ?? false,
       hourlyRate: data.hourlyRate ?? 50,
       serviceArea: data.serviceArea,
     },
   });
 
-  if (
-    user?.serviceProfile &&
-    (user.kycStatus !== "VERIFIED" || !user.serviceProfile.verified)
-  ) {
+  if (!tier1Ok) {
     await prisma.serviceProfile.update({
       where: { userId: session.user.id },
       data: { available: false },

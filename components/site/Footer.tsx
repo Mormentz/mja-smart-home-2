@@ -54,6 +54,8 @@ export function Footer() {
             title="Platform"
             links={[
               { href: "/properties", label: "Browse" },
+              { href: "/artisans", label: "Artisans" },
+              { href: "/artisans/join", label: "Become an artisan" },
               { href: "/about", label: "About" },
               { href: "/contact", label: "Contact" },
             ]}
