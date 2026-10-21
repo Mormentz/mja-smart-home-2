@@ -1,10 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { SkillProficiency } from "@prisma/client";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getState } from "@/lib/geo/nigeria-states";
+import { isSkillProficiency } from "@/lib/services/skill-proficiency";
 
 async function requireArtisan() {
   const session = await auth();
@@ -77,7 +79,14 @@ export async function saveArtisanLocation(data: z.infer<typeof locationSchema>) 
   return { success: true };
 }
 
-export async function saveArtisanTrades(subcategoryIds: string[]) {
+const tradeSelectionSchema = z.object({
+  subcategoryId: z.string().min(1),
+  proficiency: z.enum(["BEGINNER", "INTERMEDIATE", "ADVANCED", "EXPERT"]),
+});
+
+export async function saveArtisanTrades(
+  selections: { subcategoryId: string; proficiency: string }[],
+) {
   const session = await requireArtisan();
   if (!session) return { error: "Unauthorized" };
 
@@ -86,13 +95,27 @@ export async function saveArtisanTrades(subcategoryIds: string[]) {
     return { error: "Verify your email before continuing onboarding" };
   }
 
-  const unique = Array.from(new Set(subcategoryIds.filter(Boolean)));
-  if (unique.length < 1) {
+  const parsed = z.array(tradeSelectionSchema).safeParse(
+    selections.map((s) => ({
+      subcategoryId: s.subcategoryId,
+      proficiency: isSkillProficiency(s.proficiency) ? s.proficiency : "INTERMEDIATE",
+    })),
+  );
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid trade selection" };
+  }
+
+  const byId = new Map<string, SkillProficiency>();
+  for (const row of parsed.data) {
+    byId.set(row.subcategoryId, row.proficiency as SkillProficiency);
+  }
+  const uniqueIds = Array.from(byId.keys());
+  if (uniqueIds.length < 1) {
     return { error: "Pick at least one service subcategory" };
   }
 
   const valid = await prisma.serviceSubcategory.findMany({
-    where: { id: { in: unique } },
+    where: { id: { in: uniqueIds } },
     include: { category: true },
   });
   if (valid.length === 0) return { error: "Invalid service selection" };
@@ -102,10 +125,24 @@ export async function saveArtisanTrades(subcategoryIds: string[]) {
     data: valid.map((s) => ({
       userId: session.user.id,
       subcategoryId: s.id,
+      proficiency: byId.get(s.id) ?? SkillProficiency.INTERMEDIATE,
     })),
   });
 
-  const primaryTrade = valid[0]!.category.name;
+  // Prefer the highest-proficiency skill as the public trade label
+  const rank: Record<SkillProficiency, number> = {
+    BEGINNER: 1,
+    INTERMEDIATE: 2,
+    ADVANCED: 3,
+    EXPERT: 4,
+  };
+  const best = [...valid].sort(
+    (a, b) =>
+      (rank[byId.get(b.id) ?? SkillProficiency.INTERMEDIATE] ?? 0) -
+      (rank[byId.get(a.id) ?? SkillProficiency.INTERMEDIATE] ?? 0),
+  )[0]!;
+  const primaryTrade = best.category.name;
+
   await prisma.serviceProfile.upsert({
     where: { userId: session.user.id },
     update: { trade: primaryTrade },
@@ -124,6 +161,7 @@ export async function saveArtisanTrades(subcategoryIds: string[]) {
 
   revalidatePath("/dashboard/onboarding/artisan");
   revalidatePath("/dashboard/services");
+  revalidatePath("/artisans");
   return { success: true };
 }
 
@@ -135,7 +173,13 @@ export async function getArtisanOnboardingState() {
     where: { id: session.user.id },
     include: {
       serviceProfile: true,
-      artisanServices: { select: { subcategoryId: true } },
+      artisanServices: {
+        select: {
+          subcategoryId: true,
+          proficiency: true,
+          subcategory: { select: { name: true, category: { select: { name: true } } } },
+        },
+      },
       kycDocuments: { orderBy: { createdAt: "desc" } },
     },
   });

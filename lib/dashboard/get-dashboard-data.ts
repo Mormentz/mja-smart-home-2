@@ -211,9 +211,9 @@ export async function getDashboardData(
   const trustSummary = isAdmin
     ? `${pendingPropertyVerifications + pendingArtisanVerifications} items awaiting verification · ${verifiedListings} verified listings`
     : isOwner
-      ? `${listingsCount} listings · $${escrowHeldAgg._sum.amount ?? 0} escrow held · avg rating ${avgRating.toFixed(1) || "—"}`
+      ? `${listingsCount} listings · ₦${(escrowHeldAgg._sum.amount ?? 0).toLocaleString("en-NG")} escrow held · avg rating ${avgRating.toFixed(1) || "—"}`
       : isArtisan
-        ? `${openJobs} open jobs · $${escrowReleasedAgg._sum.amount ?? 0} released earnings`
+        ? `${openJobs} open jobs · ₦${(escrowReleasedAgg._sum.amount ?? 0).toLocaleString("en-NG")} released earnings`
         : `${savedHomes} saved homes · ${verifiedListings} verified listings on platform`;
 
   return {

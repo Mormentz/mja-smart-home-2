@@ -23,6 +23,7 @@ import {
   Star,
   TrendingUp,
 } from "lucide-react";
+import { formatMoney } from "@/lib/currency";
 import type { DashboardData } from "@/lib/dashboard/get-dashboard-data";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { DashboardPageToolbar } from "@/components/dashboard/dashboard-header";
@@ -70,15 +71,15 @@ export function DashboardOverview({ data }: DashboardOverviewProps) {
     : isArtisan
       ? [
           { label: "Open jobs", value: String(stats.openJobs ?? 0), trend: stats.tourRequestsTrend, icon: Calendar },
-          { label: "Escrow held", value: `$${stats.escrowHeld ?? 0}`, trend: stats.propertyViewsTrend, icon: Eye },
-          { label: "Released earnings", value: `$${stats.escrowReleased ?? 0}`, trend: stats.listingsTrend, icon: Home },
+          { label: "Escrow held", value: formatMoney(stats.escrowHeld ?? 0), trend: stats.propertyViewsTrend, icon: Eye },
+          { label: "Released earnings", value: formatMoney(stats.escrowReleased ?? 0), trend: stats.listingsTrend, icon: Home },
           { label: "Unread messages", value: stats.messages.toLocaleString(), trend: stats.messagesTrend, icon: MessageSquare },
         ]
       : isOwner
         ? [
             { label: "Listing reach", value: stats.propertyViews.toLocaleString(), trend: stats.propertyViewsTrend, icon: Eye },
             { label: "Tour requests", value: stats.tourRequests.toLocaleString(), trend: stats.tourRequestsTrend, icon: Calendar },
-            { label: "Escrow held", value: `$${stats.escrowHeld ?? 0}`, trend: stats.messagesTrend, icon: MessageSquare },
+            { label: "Escrow held", value: formatMoney(stats.escrowHeld ?? 0), trend: stats.messagesTrend, icon: MessageSquare },
             { label: "Active listings", value: stats.listings.toLocaleString(), trend: stats.listingsTrend, icon: Home },
           ]
         : [
@@ -252,7 +253,7 @@ export function DashboardOverview({ data }: DashboardOverviewProps) {
                       p.trend >= 0 ? "text-success" : "text-destructive",
                     )}
                   >
-                    ${p.price.toLocaleString()}
+                    {formatMoney(p.price)}
                   </DashboardTableCell>
                   <DashboardTableCell className="text-right">
                     <span className="inline-flex items-center justify-end gap-1">

@@ -22,6 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/dashboard/dashboard-data-table";
+import { formatMoney } from "@/lib/currency";
 import { toast } from "sonner";
 
 type Job = {
@@ -116,7 +117,7 @@ export function JobsPanel({ jobs, mode }: { jobs: Job[]; mode: "customer" | "art
                     </span>
                   </DashboardTableCell>
                   <DashboardTableCell className="text-right tabular-nums text-xs">
-                    {job.priceEstimate != null ? `$${job.priceEstimate}` : "—"}
+                    {job.priceEstimate != null ? formatMoney(job.priceEstimate) : "—"}
                   </DashboardTableCell>
                   <DashboardTableCell className="text-right tabular-nums text-xs">
                     {job.etaMinutes != null ? `${job.etaMinutes}m` : "—"}

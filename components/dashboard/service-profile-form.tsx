@@ -8,8 +8,13 @@ import { requestArtisanVerification } from "@/lib/actions/verification";
 import {
   TradePicker,
   type TaxonomyOption,
+  type TradeSelection,
 } from "@/components/artisans/onboarding/trade-picker";
 import { KycUpgradePanel } from "@/components/artisans/kyc-upgrade-panel";
+import {
+  skillProficiencyLabel,
+  type SkillProficiencyLevel,
+} from "@/lib/services/skill-proficiency";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,7 +33,8 @@ type ServiceProfileFormProps = {
     serviceArea: string | null;
   } | null;
   categories: TaxonomyOption[];
-  selectedSubcategoryIds: string[];
+  selectedTrades: TradeSelection[];
+  skillSummary: { name: string; proficiency: string }[];
   kycLevel: string;
   kycStatus: string;
   onboardingComplete: boolean;
@@ -37,7 +43,8 @@ type ServiceProfileFormProps = {
 export function ServiceProfileForm({
   profile,
   categories,
-  selectedSubcategoryIds,
+  selectedTrades,
+  skillSummary,
   kycLevel,
   kycStatus,
   onboardingComplete,
@@ -45,9 +52,9 @@ export function ServiceProfileForm({
   const [trade, setTrade] = useState(profile?.trade ?? "");
   const [bio, setBio] = useState(profile?.bio ?? "");
   const [available, setAvailable] = useState(profile?.available ?? false);
-  const [hourlyRate, setHourlyRate] = useState(profile?.hourlyRate ?? 50);
+  const [hourlyRate, setHourlyRate] = useState(profile?.hourlyRate ?? 5000);
   const [serviceArea, setServiceArea] = useState(profile?.serviceArea ?? "");
-  const [selected, setSelected] = useState(selectedSubcategoryIds);
+  const [selected, setSelected] = useState<TradeSelection[]>(selectedTrades);
   const [loading, setLoading] = useState(false);
   const tier1Ok = kycStatus === "VERIFIED";
 
@@ -120,8 +127,24 @@ export function ServiceProfileForm({
             </Button>
           )}
 
+        {skillSummary.length > 0 && (
+          <div className="rounded-xl bg-muted/50 px-3 py-2">
+            <p className="text-xs font-medium text-muted-foreground">Your skills</p>
+            <ul className="mt-1 flex flex-wrap gap-1.5">
+              {skillSummary.map((s) => (
+                <li
+                  key={`${s.name}-${s.proficiency}`}
+                  className="rounded-full bg-background px-2.5 py-1 text-xs"
+                >
+                  {s.name} · {skillProficiencyLabel(s.proficiency)}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <div className="space-y-2">
-          <Label>Services (taxonomy)</Label>
+          <Label>Services & proficiency</Label>
           <TradePicker categories={categories} selected={selected} onChange={setSelected} />
         </div>
 
@@ -135,7 +158,7 @@ export function ServiceProfileForm({
         </div>
         <div className="grid sm:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="rate">Hourly rate ($)</Label>
+            <Label htmlFor="rate">Hourly rate (₦)</Label>
             <Input
               id="rate"
               type="number"

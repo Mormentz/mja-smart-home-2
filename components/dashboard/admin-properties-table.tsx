@@ -4,6 +4,7 @@ import Link from "next/link";
 import { MoreHorizontal } from "lucide-react";
 import { decidePropertyVerification } from "@/lib/actions/verification";
 import { deletePropertyAsAdmin, setPropertyFeatured } from "@/lib/actions/admin";
+import { formatMoney } from "@/lib/currency";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -99,7 +100,7 @@ export function AdminPropertiesTable({ properties }: { properties: PropertyRow[]
                 {p.owner.name ?? p.owner.email}
               </DashboardTableCell>
               <DashboardTableCell className="text-right font-medium tabular-nums text-primary">
-                ${p.price.toLocaleString()}
+                {formatMoney(p.price)}
               </DashboardTableCell>
               <DashboardTableCell>
                 <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase">

@@ -3,6 +3,7 @@
 import { MoreHorizontal } from "lucide-react";
 import { decideArtisanVerification } from "@/lib/actions/verification";
 import { setArtisanBadge, setUserActive } from "@/lib/actions/admin";
+import { formatMoneyPerHour } from "@/lib/currency";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -109,7 +110,7 @@ export function AdminArtisansTable({ artisans }: { artisans: ArtisanRow[] }) {
                   </span>
                 </DashboardTableCell>
                 <DashboardTableCell className="text-right tabular-nums text-xs">
-                  ${p?.hourlyRate ?? 0}/hr
+                  {formatMoneyPerHour(p?.hourlyRate ?? 0)}
                 </DashboardTableCell>
                 <DashboardTableCell className="text-right">
                   <DropdownMenu>

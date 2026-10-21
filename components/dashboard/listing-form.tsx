@@ -9,6 +9,7 @@ import {
 } from "@/lib/actions/listings";
 import { uploadPropertyImages } from "@/lib/actions/uploads";
 import { requestPropertyVerification } from "@/lib/actions/verification";
+import { formatMoney } from "@/lib/currency";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -168,7 +169,7 @@ function ListingRow({ listing, onEdit }: { listing: Listing; onEdit: () => void 
         {listing.type.replace("_", " ")} · {listing.category}
       </DashboardTableCell>
       <DashboardTableCell className="text-right tabular-nums font-medium text-primary">
-        ${listing.price.toLocaleString()}
+        {formatMoney(listing.price)}
       </DashboardTableCell>
       <DashboardTableCell>
         <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase">
@@ -274,7 +275,7 @@ function ListingForm({
       title: String(form.get("title")),
       location: String(form.get("location")),
       price: Number(form.get("price")),
-      currency: "$",
+      currency: "₦",
       type: String(form.get("type")) as "FOR_SALE" | "FOR_RENT",
       category: String(form.get("category")) as
         | "HOUSE"

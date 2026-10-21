@@ -3,6 +3,7 @@
 import { MoreHorizontal } from "lucide-react";
 import { activateLeaseWithEscrow } from "@/lib/actions/leases";
 import { releaseEscrow, refundEscrow } from "@/lib/actions/escrow";
+import { formatMoney } from "@/lib/currency";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -120,7 +121,7 @@ export function LeasesPanel({
                       {lease.escrowPayments.map((p) => (
                         <div key={p.id} className="flex items-center gap-1.5">
                           <span>
-                            ${p.amount} {p.status}
+                            {formatMoney(p.amount)} {p.status}
                           </span>
                           {mode === "landlord" && p.status === "HELD" && (
                             <>
@@ -160,7 +161,7 @@ export function LeasesPanel({
                       <DropdownMenuContent align="end">
                         {held.map((p) => (
                           <DropdownMenuItem key={p.id} onClick={() => release(p.id)}>
-                            Release ${p.amount}
+                            Release {formatMoney(p.amount)}
                           </DropdownMenuItem>
                         ))}
                       </DropdownMenuContent>

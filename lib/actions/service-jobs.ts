@@ -231,6 +231,12 @@ export async function getArtisanById(id: string) {
     where: { id, role: "ARTISAN" },
     include: {
       serviceProfile: true,
+      artisanServices: {
+        include: {
+          subcategory: { include: { category: true } },
+        },
+        orderBy: { createdAt: "asc" },
+      },
       reviewsReceived: {
         include: { author: { select: { name: true } } },
         orderBy: { createdAt: "desc" },

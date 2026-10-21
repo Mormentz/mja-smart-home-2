@@ -4,6 +4,7 @@ import { getAdminStats } from "@/lib/actions/admin";
 import { DashboardSection } from "@/components/dashboard/dashboard-section";
 import { DashboardPanel } from "@/components/dashboard/dashboard-panel";
 import { Eye, Home, ShieldCheck, Users, Wrench } from "lucide-react";
+import { formatMoney } from "@/lib/currency";
 
 export default async function AdminOverviewPage() {
   await requireRole(["ADMIN"]);
@@ -17,7 +18,7 @@ export default async function AdminOverviewPage() {
     { label: "Pending KYC", value: String(stats?.pendingKyc ?? 0), href: "/dashboard/admin/verifications", icon: ShieldCheck },
     { label: "Pending listings", value: String(stats?.pendingProps ?? 0), href: "/dashboard/admin/verifications", icon: Home },
     { label: "Pending artisans", value: String(stats?.pendingArtisans ?? 0), href: "/dashboard/admin/verifications", icon: Wrench },
-    { label: "Escrow held", value: `$${stats?.escrowHeld ?? 0}`, href: "/dashboard/admin", icon: ShieldCheck },
+    { label: "Escrow held", value: formatMoney(stats?.escrowHeld ?? 0), href: "/dashboard/admin", icon: ShieldCheck },
   ];
 
   return (

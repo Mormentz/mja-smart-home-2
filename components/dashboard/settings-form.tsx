@@ -104,7 +104,9 @@ export function SettingsForm({
           {role === "ARTISAN" && "Enhanced KYC required before appearing as available publicly. Submit your phone for admin review."}
           {role === "ADMIN" && "Admin accounts are fully verified."}
         </p>
-        {role !== "ADMIN" && kycStatus !== "VERIFIED" && (
+        {role !== "ADMIN" &&
+          kycStatus !== "VERIFIED" &&
+          kycStatus !== "PENDING" && (
           <Button
             type="button"
             size="sm"
@@ -119,6 +121,14 @@ export function SettingsForm({
                   ? "Resubmit KYC for review"
                   : "Submit KYC for review"}
           </Button>
+        )}
+        {role !== "ADMIN" && kycStatus === "PENDING" && (
+          <p className="text-xs text-amber-800 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
+            KYC is pending admin review. You can&apos;t submit again until it&apos;s approved or
+            rejected.
+            {role === "ARTISAN" &&
+              " After Tier 1 is verified, optional Tier 2 / 3 upgrades are available on Services."}
+          </p>
         )}
       </div>
     </div>

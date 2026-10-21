@@ -59,6 +59,13 @@ enum SkillBadge {
   GOLD
 }
 
+enum SkillProficiency {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
 enum LeaseStatus {
   DRAFT
   ACTIVE
@@ -182,11 +189,12 @@ model ServiceSubcategory {
 }
 
 model ArtisanService {
-  id             String   @id @default(cuid())
+  id             String           @id @default(cuid())
   userId         String
   subcategoryId  String
+  proficiency    SkillProficiency @default(INTERMEDIATE)
   note           String?
-  createdAt      DateTime @default(now())
+  createdAt      DateTime         @default(now())
 
   user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   subcategory  ServiceSubcategory @relation(fields: [subcategoryId], references: [id], onDelete: Cascade)
@@ -277,7 +285,7 @@ model Property {
   title              String
   location           String
   price              Int
-  currency           String             @default("$")
+  currency           String             @default("₦")
   type               PropertyType
   category           PropertyCategory
   beds               Int
@@ -372,7 +380,7 @@ model ServiceProfile {
   verificationStatus VerificationStatus @default(UNVERIFIED)
   skillBadge       SkillBadge         @default(NONE)
   available        Boolean            @default(false)
-  hourlyRate       Int                @default(50)
+  hourlyRate       Int                @default(5000)
   serviceArea      String?
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt

@@ -33,7 +33,10 @@ export default async function ArtisanOnboardingPage() {
           lng: user.lng,
           onboardingStep: user.onboardingStep,
           kycStatus: user.kycStatus,
-          artisanServices: user.artisanServices,
+          artisanServices: user.artisanServices.map((s) => ({
+            subcategoryId: s.subcategoryId,
+            proficiency: s.proficiency,
+          })),
         }}
         categories={categories.map((c) => ({
           id: c.id,

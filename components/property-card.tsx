@@ -4,6 +4,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowUpRight, Bath, BedDouble, MapPin, Ruler } from "lucide-react";
 import type { Property } from "@/lib/properties";
+import { formatMoney } from "@/lib/currency";
 import { imageSrc } from "@/lib/utils";
 
 export function PropertyCard({ p, delay = 0 }: { p: Property; delay?: number }) {
@@ -57,7 +58,7 @@ export function PropertyCard({ p, delay = 0 }: { p: Property; delay?: number }) 
           </div>
           <div className="mt-5 flex items-end justify-between">
             <p className="font-display text-2xl font-semibold text-primary">
-              {p.currency}{p.price.toLocaleString()}
+              {formatMoney(p.price, { currency: p.currency })}
               {p.type === "For Rent" && <span className="text-sm text-muted-foreground font-normal">/mo</span>}
             </p>
             <span className="grid place-items-center w-10 h-10 rounded-full bg-primary text-primary-foreground group-hover:bg-success group-hover:text-ink transition">

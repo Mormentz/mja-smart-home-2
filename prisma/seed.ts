@@ -179,7 +179,7 @@ async function main() {
       verificationStatus: VerificationStatus.VERIFIED,
       skillBadge: SkillBadge.GOLD,
       available: true,
-      hourlyRate: 75,
+      hourlyRate: 8500,
       serviceArea: "Lagos Island & Lekki",
     },
     create: {
@@ -190,7 +190,7 @@ async function main() {
       verificationStatus: VerificationStatus.VERIFIED,
       skillBadge: SkillBadge.GOLD,
       available: true,
-      hourlyRate: 75,
+      hourlyRate: 8500,
       serviceArea: "Lagos Island & Lekki",
     },
   });

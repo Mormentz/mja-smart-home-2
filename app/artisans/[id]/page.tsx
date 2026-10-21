@@ -4,9 +4,13 @@ import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { BookArtisanForm } from "@/components/artisans/book-artisan-form";
 import { getArtisanById } from "@/lib/actions/service-jobs";
+import { skillProficiencyLabel } from "@/lib/services/skill-proficiency";
+import { formatMoneyPerHour } from "@/lib/currency";
 import { Badge } from "@/components/ui/badge";
 
 type PageProps = { params: Promise<{ id: string }> };
+
+const PROF_RANK = { EXPERT: 0, ADVANCED: 1, INTERMEDIATE: 2, BEGINNER: 3 } as const;
 
 export default async function ArtisanDetailPage({ params }: PageProps) {
   const { id } = await params;
@@ -14,6 +18,11 @@ export default async function ArtisanDetailPage({ params }: PageProps) {
   if (!artisan || !artisan.serviceProfile) notFound();
 
   const profile = artisan.serviceProfile;
+  const skills = [...artisan.artisanServices].sort(
+    (a, b) =>
+      (PROF_RANK[a.proficiency] ?? 9) - (PROF_RANK[b.proficiency] ?? 9) ||
+      a.subcategory.name.localeCompare(b.subcategory.name),
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -47,8 +56,31 @@ export default async function ArtisanDetailPage({ params }: PageProps) {
           <div>
             <h2 className="font-display text-2xl font-semibold">About</h2>
             <p className="mt-3 text-muted-foreground leading-relaxed">{profile.bio}</p>
-            <p className="mt-4 font-semibold text-primary">${profile.hourlyRate}/hour</p>
+            <p className="mt-4 font-semibold text-primary">{formatMoneyPerHour(profile.hourlyRate)}</p>
           </div>
+
+          {skills.length > 0 && (
+            <div>
+              <h2 className="font-display text-2xl font-semibold">Skills & proficiency</h2>
+              <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+                {skills.map((s) => (
+                  <li
+                    key={s.id}
+                    className="flex items-center justify-between gap-3 rounded-2xl border border-border px-4 py-3"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{s.subcategory.name}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {s.subcategory.category.name}
+                      </p>
+                    </div>
+                    <Badge variant="secondary">{skillProficiencyLabel(s.proficiency)}</Badge>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <div>
             <h2 className="font-display text-2xl font-semibold">Reviews</h2>
             {artisan.reviewsReceived.length === 0 ? (

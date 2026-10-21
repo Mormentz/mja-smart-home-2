@@ -3,6 +3,11 @@
 import { useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  SKILL_PROFICIENCY_LABELS,
+  SKILL_PROFICIENCY_LEVELS,
+  type SkillProficiencyLevel,
+} from "@/lib/services/skill-proficiency";
 
 export type TaxonomyOption = {
   id: string;
@@ -12,17 +17,25 @@ export type TaxonomyOption = {
   subcategories: { id: string; name: string; slug: string }[];
 };
 
+export type TradeSelection = {
+  subcategoryId: string;
+  proficiency: SkillProficiencyLevel;
+};
+
 export function TradePicker({
   categories,
   selected,
   onChange,
 }: {
   categories: TaxonomyOption[];
-  selected: string[];
-  onChange: (ids: string[]) => void;
+  selected: TradeSelection[];
+  onChange: (next: TradeSelection[]) => void;
 }) {
   const [query, setQuery] = useState("");
-  const selectedSet = useMemo(() => new Set(selected), [selected]);
+  const selectedMap = useMemo(
+    () => new Map(selected.map((s) => [s.subcategoryId, s.proficiency])),
+    [selected],
+  );
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -41,11 +54,17 @@ export function TradePicker({
   }, [categories, query]);
 
   function toggle(id: string) {
-    if (selectedSet.has(id)) {
-      onChange(selected.filter((x) => x !== id));
+    if (selectedMap.has(id)) {
+      onChange(selected.filter((x) => x.subcategoryId !== id));
     } else {
-      onChange([...selected, id]);
+      onChange([...selected, { subcategoryId: id, proficiency: "INTERMEDIATE" }]);
     }
+  }
+
+  function setProficiency(id: string, proficiency: SkillProficiencyLevel) {
+    onChange(
+      selected.map((s) => (s.subcategoryId === id ? { ...s, proficiency } : s)),
+    );
   }
 
   return (
@@ -55,7 +74,9 @@ export function TradePicker({
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Search trades (electrical, POP, borehole…)"
       />
-      <p className="text-xs text-muted-foreground">{selected.length} selected</p>
+      <p className="text-xs text-muted-foreground">
+        {selected.length} selected — set proficiency for each skill
+      </p>
       <div className="max-h-[420px] space-y-4 overflow-y-auto rounded-xl border border-border/70 p-3">
         {filtered.map((cat) => (
           <div key={cat.id}>
@@ -69,21 +90,46 @@ export function TradePicker({
             </div>
             <div className="grid gap-2 sm:grid-cols-2">
               {cat.subcategories.map((sub) => {
-                const checked = selectedSet.has(sub.id);
+                const checked = selectedMap.has(sub.id);
+                const proficiency = selectedMap.get(sub.id) ?? "INTERMEDIATE";
                 return (
-                  <label
+                  <div
                     key={sub.id}
-                    className={`flex cursor-pointer items-start gap-2 rounded-lg border px-3 py-2 text-sm ${
+                    className={`rounded-lg border px-3 py-2 text-sm ${
                       checked ? "border-ink bg-muted/60" : "border-border/70"
                     }`}
                   >
-                    <Checkbox
-                      checked={checked}
-                      onCheckedChange={() => toggle(sub.id)}
-                      className="mt-0.5"
-                    />
-                    <span>{sub.name}</span>
-                  </label>
+                    <label className="flex cursor-pointer items-start gap-2">
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={() => toggle(sub.id)}
+                        className="mt-0.5"
+                      />
+                      <span>{sub.name}</span>
+                    </label>
+                    {checked && (
+                      <div className="mt-2 pl-6">
+                        <label className="sr-only" htmlFor={`prof-${sub.id}`}>
+                          Proficiency for {sub.name}
+                        </label>
+                        <select
+                          id={`prof-${sub.id}`}
+                          value={proficiency}
+                          onChange={(e) =>
+                            setProficiency(sub.id, e.target.value as SkillProficiencyLevel)
+                          }
+                          onClick={(e) => e.stopPropagation()}
+                          className="h-8 w-full rounded-lg border border-border bg-background px-2 text-xs"
+                        >
+                          {SKILL_PROFICIENCY_LEVELS.map((level) => (
+                            <option key={level} value={level}>
+                              {SKILL_PROFICIENCY_LABELS[level]}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </div>

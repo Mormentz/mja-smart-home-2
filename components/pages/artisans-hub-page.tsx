@@ -12,6 +12,8 @@ import { Input } from "@/components/ui/input";
 import { imageSrc } from "@/lib/utils";
 import { HIRE_BENEFITS } from "@/lib/artisans-content";
 import { NIGERIA_STATES } from "@/lib/geo/nigeria-states";
+import { skillProficiencyLabel } from "@/lib/services/skill-proficiency";
+import { formatMoneyPerHour } from "@/lib/currency";
 import heroGroup from "@/assets/artisans/artisans-hero-group.jpg";
 import electrician from "@/assets/artisans/artisan-electrician.jpg";
 import plumber from "@/assets/artisans/artisan-plumber.jpg";
@@ -44,6 +46,7 @@ export type ArtisanListItem = {
     categoryName: string;
     subcategorySlug: string;
     subcategoryName: string;
+    proficiency: string;
   }[];
   reviewsReceived: { rating: number }[];
 };
@@ -391,8 +394,13 @@ export function ArtisansHubPage({
                       </span>
                     )}
                     <span className="rounded-full bg-muted px-3 py-1">
-                      ${profile.hourlyRate}/hr
+                      {formatMoneyPerHour(profile.hourlyRate)}
                     </span>
+                    {a.categories[0] && (
+                      <span className="rounded-full bg-muted px-3 py-1">
+                        {skillProficiencyLabel(a.categories[0].proficiency)}
+                      </span>
+                    )}
                   </div>
                 </div>
               </Link>

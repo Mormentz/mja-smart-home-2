@@ -7,6 +7,7 @@ import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { PropertyActions } from "@/components/property-actions";
 import type { Property } from "@/lib/properties";
+import { formatMoney } from "@/lib/currency";
 import { imageSrc } from "@/lib/utils";
 
 export function PropertyDetailPage({
@@ -50,7 +51,7 @@ export function PropertyDetailPage({
             <div className="text-right">
               <p className="text-ink-foreground/60 text-sm">Asking</p>
               <p className="font-display text-4xl md:text-5xl font-semibold text-success">
-                {p.currency}{p.price.toLocaleString()}
+                {formatMoney(p.price, { currency: p.currency })}
                 {p.type === "For Rent" && <span className="text-lg text-ink-foreground/60 font-normal"> /mo</span>}
               </p>
             </div>
@@ -154,7 +155,7 @@ export function PropertyDetailPage({
             </span>
           </div>
           <p className="mt-4 font-display text-3xl font-semibold text-primary">
-            {p.currency}{p.price.toLocaleString()}
+            {formatMoney(p.price, { currency: p.currency })}
             {p.type === "For Rent" && <span className="text-base text-muted-foreground font-normal"> /mo</span>}
           </p>
           <PropertyActions
@@ -179,7 +180,7 @@ export function PropertyDetailPage({
               <div className="p-5">
                 <p className="text-sm text-muted-foreground">{s.location}</p>
                 <p className="mt-1 font-display text-lg font-semibold">{s.title}</p>
-                <p className="mt-2 text-primary font-semibold">{s.currency}{s.price.toLocaleString()}</p>
+                <p className="mt-2 text-primary font-semibold">{formatMoney(s.price, { currency: s.currency })}</p>
               </div>
             </Link>
           ))}

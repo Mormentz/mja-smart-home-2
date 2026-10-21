@@ -66,6 +66,7 @@ export default async function ArtisansPage({
       categoryName: s.subcategory.category.name,
       subcategorySlug: s.subcategory.slug,
       subcategoryName: s.subcategory.name,
+      proficiency: s.proficiency,
     })),
     reviewsReceived: a.reviewsReceived.map((r) => ({ rating: r.rating })),
   }));

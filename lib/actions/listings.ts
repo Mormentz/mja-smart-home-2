@@ -12,7 +12,7 @@ const listingSchema = z.object({
   title: z.string().min(3),
   location: z.string().min(2),
   price: z.coerce.number().int().positive(),
-  currency: z.string().default("$"),
+  currency: z.string().default("₦"),
   type: z.enum(["FOR_SALE", "FOR_RENT"]),
   category: z.enum(["HOUSE", "APARTMENT", "VILLA", "LOFT", "TOWNHOUSE", "PENTHOUSE"]),
   beds: z.coerce.number().int().min(0),

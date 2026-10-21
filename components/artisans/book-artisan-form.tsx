@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createServiceJob } from "@/lib/actions/service-jobs";
+import { formatMoney } from "@/lib/currency";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -42,7 +43,7 @@ export function BookArtisanForm({
       return;
     }
     toast.success(
-      `Job booked — estimate $${result.priceEstimate}, ETA ~${result.etaMinutes} min (held in escrow)`,
+      `Job booked — estimate ${formatMoney(result.priceEstimate)}, ETA ~${result.etaMinutes} min (held in escrow)`,
     );
     router.push("/dashboard/jobs");
   }

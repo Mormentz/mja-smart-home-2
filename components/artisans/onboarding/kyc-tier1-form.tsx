@@ -16,15 +16,40 @@ type Props = {
     lgaName: string;
     areaName: string;
   };
+  kycStatus?: string;
   onDone: () => void;
 };
 
-export function KycTier1Form({ defaults, onDone }: Props) {
+export function KycTier1Form({ defaults, kycStatus, onDone }: Props) {
+  const pending = kycStatus === "PENDING";
+  const verified = kycStatus === "VERIFIED";
   const [legalName, setLegalName] = useState(defaults.legalName);
   const [phone, setPhone] = useState(defaults.phone);
   const [nin, setNin] = useState(defaults.nin);
   const [fileName, setFileName] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  if (pending || verified) {
+    return (
+      <div className="space-y-3 text-sm">
+        <p className="rounded-xl bg-muted px-3 py-2">
+          {pending && (
+            <>
+              Tier 1 KYC is <strong>pending admin review</strong>. You can&apos;t resubmit until
+              it&apos;s approved or rejected. Optional Tier 2 / 3 upgrades are available after
+              verification from your Services page.
+            </>
+          )}
+          {verified && (
+            <>
+              Tier 1 KYC is <strong>verified</strong>. You can list services and go available.
+              Submit Tier 2 / 3 upgrades from your Services page if you want a higher trust badge.
+            </>
+          )}
+        </p>
+      </div>
+    );
+  }
 
   async function onUpload(file: File | null) {
     if (!file) return;

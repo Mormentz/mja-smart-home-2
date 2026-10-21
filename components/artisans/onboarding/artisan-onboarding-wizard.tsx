@@ -10,9 +10,11 @@ import {
 import {
   TradePicker,
   type TaxonomyOption,
+  type TradeSelection,
 } from "@/components/artisans/onboarding/trade-picker";
 import { KycTier1Form } from "@/components/artisans/onboarding/kyc-tier1-form";
 import { saveArtisanLocation, saveArtisanTrades } from "@/lib/actions/artisan-onboarding";
+import type { SkillProficiencyLevel } from "@/lib/services/skill-proficiency";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,7 +33,7 @@ type UserState = {
   lng: number | null;
   onboardingStep: number;
   kycStatus: string;
-  artisanServices: { subcategoryId: string }[];
+  artisanServices: { subcategoryId: string; proficiency: string }[];
 };
 
 const STEPS = [
@@ -67,8 +69,11 @@ export function ArtisanOnboardingWizard({
     lat: user.lat,
     lng: user.lng,
   });
-  const [selected, setSelected] = useState(
-    user.artisanServices.map((s) => s.subcategoryId),
+  const [selected, setSelected] = useState<TradeSelection[]>(
+    user.artisanServices.map((s) => ({
+      subcategoryId: s.subcategoryId,
+      proficiency: (s.proficiency as SkillProficiencyLevel) || "INTERMEDIATE",
+    })),
   );
   const [saving, setSaving] = useState(false);
 
@@ -163,14 +168,8 @@ export function ArtisanOnboardingWizard({
 
       {step === 4 && (
         <div className="space-y-4 rounded-2xl border border-border/70 bg-card p-5">
-          {(user.kycStatus === "PENDING" || user.kycStatus === "VERIFIED") && (
-            <p className="rounded-xl bg-muted px-3 py-2 text-sm">
-              KYC status: <strong>{user.kycStatus}</strong>
-              {user.kycStatus === "PENDING" && " — admin will review shortly."}
-              {user.kycStatus === "VERIFIED" && " — you can list services and go available."}
-            </p>
-          )}
           <KycTier1Form
+            kycStatus={user.kycStatus}
             defaults={{
               legalName: name || user.name || "",
               phone: phone || user.phone || "",
@@ -184,9 +183,22 @@ export function ArtisanOnboardingWizard({
               router.refresh();
             }}
           />
-          <Button type="button" variant="secondary" onClick={() => setStep(3)}>
-            Back
-          </Button>
+          {user.kycStatus !== "PENDING" && user.kycStatus !== "VERIFIED" && (
+            <Button type="button" variant="secondary" onClick={() => setStep(3)}>
+              Back
+            </Button>
+          )}
+          {(user.kycStatus === "PENDING" || user.kycStatus === "VERIFIED") && (
+            <Button
+              type="button"
+              onClick={() => {
+                router.push("/dashboard/services");
+                router.refresh();
+              }}
+            >
+              Go to services
+            </Button>
+          )}
         </div>
       )}
     </div>

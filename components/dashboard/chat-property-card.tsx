@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { imageSrc, resolveImage } from "@/lib/properties";
+import { formatMoney } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 
 export function ChatPropertyCard({
@@ -37,8 +38,7 @@ export function ChatPropertyCard({
         <p className="truncate text-sm font-semibold text-foreground">{property.title}</p>
         <p className="truncate text-[11px] text-muted-foreground">{property.location}</p>
         <p className="mt-1 text-xs font-medium text-primary">
-          {property.currency}
-          {property.price.toLocaleString()}
+          {formatMoney(property.price, { currency: property.currency })}
           {typeLabel === "For Rent" ? "/mo" : ""}
           <span className="ml-1.5 font-normal text-muted-foreground">· {typeLabel}</span>
         </p>

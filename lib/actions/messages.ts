@@ -322,7 +322,7 @@ export async function updateServiceProfile(data: {
       trade,
       bio,
       available: available ?? false,
-      hourlyRate: data.hourlyRate ?? 50,
+      hourlyRate: data.hourlyRate ?? 5000,
       serviceArea: data.serviceArea,
     },
   });
