@@ -18,7 +18,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { imageSrc, resolveImage } from "@/lib/properties";
+import { imageSrc, resolveImage } from "@/lib/property-images";
 import { toast } from "sonner";
 
 type EscrowRow = {

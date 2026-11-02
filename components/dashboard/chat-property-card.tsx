@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
-import { imageSrc, resolveImage } from "@/lib/properties";
+import { imageSrc, resolveImage } from "@/lib/property-images";
 import { formatMoney } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 

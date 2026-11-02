@@ -7,7 +7,7 @@ import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { PropertyActions } from "@/components/property-actions";
 import type { PropertyEngagement } from "@/lib/actions/property-engagement";
-import type { Property } from "@/lib/properties";
+import type { Property } from "@/lib/property-types";
 import { formatMoney } from "@/lib/currency";
 import { imageSrc } from "@/lib/utils";
 

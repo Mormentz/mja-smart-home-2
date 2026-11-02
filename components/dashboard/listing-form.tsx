@@ -31,7 +31,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/dashboard/dashboard-data-table";
-import { resolveImage, imageSrc as propertyImageSrc } from "@/lib/properties";
+import { resolveImage, imageSrc as propertyImageSrc } from "@/lib/property-images";
 import { toast } from "sonner";
 
 type AmenityOption = { id: string; name: string; slug: string };

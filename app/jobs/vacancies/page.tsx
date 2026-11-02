@@ -5,12 +5,14 @@ import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { ApplyButton } from "@/components/jobs/apply-button";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Vacancies — HomeConnect",
 };
 
 export default async function VacanciesPage() {
-  const vacancies = await listPublishedVacancies();
+  const vacancies = await listPublishedVacancies().catch(() => []);
 
   return (
     <div className="min-h-screen bg-background">

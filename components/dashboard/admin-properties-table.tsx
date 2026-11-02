@@ -23,7 +23,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/dashboard/dashboard-data-table";
-import { imageSrc as toSrc, resolveImage } from "@/lib/properties";
+import { imageSrc as toSrc, resolveImage } from "@/lib/property-images";
 import { toast } from "sonner";
 
 type PropertyRow = {

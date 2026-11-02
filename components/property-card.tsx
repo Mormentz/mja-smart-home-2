@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowUpRight, Bath, BedDouble, MapPin, Ruler } from "lucide-react";
-import type { Property } from "@/lib/properties";
+import type { Property } from "@/lib/property-types";
 import { formatMoney } from "@/lib/currency";
 import { imageSrc } from "@/lib/utils";
 

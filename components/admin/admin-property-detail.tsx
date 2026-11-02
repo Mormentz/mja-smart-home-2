@@ -25,7 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { formatMoney } from "@/lib/currency";
-import { imageSrc, resolveImage } from "@/lib/properties";
+import { imageSrc, resolveImage } from "@/lib/property-images";
 
 const selectCls = "h-10 w-full rounded-md border border-border bg-background px-3 text-sm";
 

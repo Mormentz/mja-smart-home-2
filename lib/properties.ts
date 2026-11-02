@@ -1,55 +1,13 @@
-import type { StaticImageData } from "next/image";
+import "server-only";
+
 import type { PropertyCategory, PropertyType, VerificationStatus } from "@/generated/prisma/client";
-import p1 from "@/assets/property-1.jpg";
-import p2 from "@/assets/property-2.jpg";
-import p3 from "@/assets/property-3.jpg";
-import p4 from "@/assets/property-4.jpg";
-import p5 from "@/assets/property-5.jpg";
-import p6 from "@/assets/property-6.jpg";
 import { prisma } from "@/lib/prisma";
+import { resolveImage } from "@/lib/property-images";
+import type { NeighborhoodScore, Property } from "@/lib/property-types";
 import { SEED_PROPERTIES } from "@/lib/seed-data";
 
-export type NeighborhoodScore = {
-  id: string;
-  name: string;
-  slug: string;
-  safety: number;
-  power: number;
-  water: number;
-  affordability: number;
-  summary: string | null;
-};
-
-export type Property = {
-  id: string;
-  title: string;
-  location: string;
-  price: number;
-  currency: string;
-  type: "For Sale" | "For Rent";
-  category: "House" | "Apartment" | "Villa" | "Loft" | "Townhouse" | "Penthouse";
-  beds: number;
-  baths: number;
-  area: number;
-  image: string | StaticImageData;
-  images: (string | StaticImageData)[];
-  featured?: boolean;
-  description: string;
-  amenities: string[];
-  ownerId?: string;
-  verificationStatus?: VerificationStatus;
-  tourUrl?: string | null;
-  neighborhood?: NeighborhoodScore | null;
-};
-
-const IMAGE_MAP: Record<string, StaticImageData> = {
-  "property-1.jpg": p1,
-  "property-2.jpg": p2,
-  "property-3.jpg": p3,
-  "property-4.jpg": p4,
-  "property-5.jpg": p5,
-  "property-6.jpg": p6,
-};
+export type { NeighborhoodScore, Property } from "@/lib/property-types";
+export { imageSrc, resolveImage } from "@/lib/property-images";
 
 const TYPE_TO_DISPLAY: Record<PropertyType, Property["type"]> = {
   FOR_SALE: "For Sale",
@@ -64,20 +22,6 @@ const CATEGORY_TO_DISPLAY: Record<PropertyCategory, Property["category"]> = {
   TOWNHOUSE: "Townhouse",
   PENTHOUSE: "Penthouse",
 };
-
-/** Resolve seed keys, uploaded paths, or remote URLs to a usable src. */
-export function resolveImage(imageKey: string): string | StaticImageData {
-  if (!imageKey) return IMAGE_MAP["property-1.jpg"];
-  if (IMAGE_MAP[imageKey]) return IMAGE_MAP[imageKey];
-  if (imageKey.startsWith("/") || imageKey.startsWith("http://") || imageKey.startsWith("https://")) {
-    return imageKey;
-  }
-  return IMAGE_MAP["property-1.jpg"];
-}
-
-export function imageSrc(image: string | StaticImageData): string {
-  return typeof image === "string" ? image : image.src;
-}
 
 function mapDbProperty(record: {
   id: string;

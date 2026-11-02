@@ -6,7 +6,7 @@ import { Search, SlidersHorizontal } from "lucide-react";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { PropertyCard } from "@/components/property-card";
-import type { Property } from "@/lib/properties";
+import type { Property } from "@/lib/property-types";
 
 const filters = ["All", "Verified", "For Sale", "For Rent", "House", "Apartment", "Villa", "Loft", "Penthouse", "Townhouse"] as const;
 

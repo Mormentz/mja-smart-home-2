@@ -39,7 +39,7 @@ import {
   TableRow,
 } from "@/components/dashboard/dashboard-data-table";
 import { cn } from "@/lib/utils";
-import { imageSrc, resolveImage } from "@/lib/properties";
+import { imageSrc, resolveImage } from "@/lib/property-images";
 
 const trendChartConfig = {
   value: { label: "Tour requests", color: "#19403d" },

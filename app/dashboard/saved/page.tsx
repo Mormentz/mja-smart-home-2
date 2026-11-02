@@ -5,7 +5,7 @@ import { DashboardSection } from "@/components/dashboard/dashboard-section";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatMoney } from "@/lib/currency";
-import { imageSrc, resolveImage } from "@/lib/properties";
+import { imageSrc, resolveImage } from "@/lib/property-images";
 import { revalidatePath } from "next/cache";
 
 async function unsave(propertyId: string) {
