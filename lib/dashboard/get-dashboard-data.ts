@@ -1,5 +1,6 @@
 import type { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { computeTourApprovalRate } from "@/lib/dashboard/tour-approval";
 
 export type DashboardStats = {
   propertyViews: number;
@@ -35,6 +36,8 @@ export type DashboardData = {
   }[];
   activeByDay: { day: string; count: number }[];
   engagementRate: number;
+  tourApprovalApproved: number;
+  tourApprovalTotal: number;
   pendingBookings: number;
   unreadMessages: number;
   recentBookings: {
@@ -204,9 +207,10 @@ export async function getDashboardData(
     }),
   }));
 
-  const approved = relatedBookings.filter((b) => b.status === "APPROVED").length;
-  const engagementRate =
-    relatedBookings.length > 0 ? Math.round((approved / relatedBookings.length) * 100) : 0;
+  const tourStats = computeTourApprovalRate(
+    relatedBookings.map((b) => ({ status: b.status, kind: b.kind })),
+  );
+  const engagementRate = tourStats.rate;
 
   const trustSummary = isAdmin
     ? `${pendingPropertyVerifications + pendingArtisanVerifications} items awaiting verification · ${verifiedListings} verified listings`
@@ -245,6 +249,8 @@ export async function getDashboardData(
     topProperties,
     activeByDay: buildActiveByDay(relatedBookings),
     engagementRate,
+    tourApprovalApproved: tourStats.approved,
+    tourApprovalTotal: tourStats.total,
     pendingBookings,
     unreadMessages,
     recentBookings,

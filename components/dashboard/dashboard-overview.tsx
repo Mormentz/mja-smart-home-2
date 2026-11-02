@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import {
   Area,
@@ -22,6 +21,7 @@ import {
   Sparkles,
   Star,
   TrendingUp,
+  Wrench,
 } from "lucide-react";
 import { formatMoney } from "@/lib/currency";
 import type { DashboardData } from "@/lib/dashboard/get-dashboard-data";
@@ -38,7 +38,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/dashboard/dashboard-data-table";
-import { AddWidgetModal } from "@/components/dashboard/add-widget-modal";
 import { cn } from "@/lib/utils";
 import { imageSrc, resolveImage } from "@/lib/properties";
 
@@ -55,7 +54,6 @@ type DashboardOverviewProps = {
 };
 
 export function DashboardOverview({ data }: DashboardOverviewProps) {
-  const [widgetOpen, setWidgetOpen] = useState(false);
   const { stats, role } = data;
   const isOwner = role === "AGENT";
   const isArtisan = role === "ARTISAN";
@@ -93,10 +91,7 @@ export function DashboardOverview({ data }: DashboardOverviewProps) {
 
   return (
     <div className="space-y-4">
-      <DashboardPageToolbar
-        onAddWidget={() => setWidgetOpen(true)}
-        onExport={() => undefined}
-      />
+      <DashboardPageToolbar title="Dashboard" />
 
       <DashboardKpiGrid items={kpis} />
 
@@ -113,97 +108,157 @@ export function DashboardOverview({ data }: DashboardOverviewProps) {
               </div>
             </div>
             <div className="flex gap-1.5 text-[11px]">
-              <span className="rounded-md bg-primary/10 px-2 py-0.5 font-medium text-primary">Tours</span>
+              <span className="rounded-md bg-primary/10 px-2 py-0.5 font-medium text-primary">
+                {isArtisan ? "Jobs" : "Tours"}
+              </span>
               <span className="rounded-md bg-muted px-2 py-0.5 text-muted-foreground">Messages</span>
             </div>
           </div>
-          <ChartContainer config={trendChartConfig} className="h-[220px] w-full aspect-auto">
-            <AreaChart data={data.bookingTrend} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-              <defs>
-                <linearGradient id="fillTrend" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="var(--color-value)" stopOpacity={0.35} />
-                  <stop offset="100%" stopColor="var(--color-value)" stopOpacity={0.02} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid vertical={false} strokeDasharray="3 3" />
-              <XAxis dataKey="label" tickLine={false} axisLine={false} interval="preserveStartEnd" minTickGap={24} />
-              <YAxis tickLine={false} axisLine={false} width={28} />
-              <ChartTooltip content={<ChartTooltipContent />} />
-              <Area type="monotone" dataKey="value" stroke="var(--color-value)" fill="url(#fillTrend)" strokeWidth={2} />
-            </AreaChart>
-          </ChartContainer>
+          {!isArtisan && (
+            <>
+              <ChartContainer config={trendChartConfig} className="h-[220px] w-full aspect-auto">
+                <AreaChart data={data.bookingTrend} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="fillTrend" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="var(--color-value)" stopOpacity={0.35} />
+                      <stop offset="100%" stopColor="var(--color-value)" stopOpacity={0.02} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                  <XAxis dataKey="label" tickLine={false} axisLine={false} interval="preserveStartEnd" minTickGap={24} />
+                  <YAxis tickLine={false} axisLine={false} width={28} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Area type="monotone" dataKey="value" stroke="var(--color-value)" fill="url(#fillTrend)" strokeWidth={2} />
+                </AreaChart>
+              </ChartContainer>
 
-          <div className="grid gap-2 sm:grid-cols-3">
-            {data.segments.map((seg) => (
-              <div
-                key={seg.label}
-                className={cn(
-                  "rounded-lg border px-3 py-2",
-                  seg.tone === "blue" && "border-blue-200/60 bg-blue-50/50",
-                  seg.tone === "green" && "border-emerald-200/60 bg-emerald-50/50",
-                  seg.tone === "orange" && "border-orange-200/60 bg-orange-50/50",
-                )}
-              >
-                <p className="text-[11px] text-muted-foreground">{seg.label}</p>
-                <p className="mt-0.5 font-display text-lg font-semibold">{seg.count.toLocaleString()}</p>
+              <div className="grid gap-2 sm:grid-cols-3">
+                {data.segments.map((seg) => (
+                  <div
+                    key={seg.label}
+                    className={cn(
+                      "rounded-lg border px-3 py-2",
+                      seg.tone === "blue" && "border-blue-200/60 bg-blue-50/50",
+                      seg.tone === "green" && "border-emerald-200/60 bg-emerald-50/50",
+                      seg.tone === "orange" && "border-orange-200/60 bg-orange-50/50",
+                    )}
+                  >
+                    <p className="text-[11px] text-muted-foreground">{seg.label}</p>
+                    <p className="mt-0.5 font-display text-lg font-semibold">{seg.count.toLocaleString()}</p>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </>
+          )}
+          {isArtisan && (
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-xl border border-border/60 bg-muted/30 p-4">
+                <p className="text-[11px] text-muted-foreground">Open jobs</p>
+                <p className="mt-1 font-display text-2xl font-semibold">{stats.openJobs ?? 0}</p>
+              </div>
+              <div className="rounded-xl border border-border/60 bg-muted/30 p-4">
+                <p className="text-[11px] text-muted-foreground">Escrow held</p>
+                <p className="mt-1 font-display text-2xl font-semibold">{formatMoney(stats.escrowHeld ?? 0)}</p>
+              </div>
+              <div className="rounded-xl border border-border/60 bg-muted/30 p-4">
+                <p className="text-[11px] text-muted-foreground">Released</p>
+                <p className="mt-1 font-display text-2xl font-semibold">{formatMoney(stats.escrowReleased ?? 0)}</p>
+              </div>
+            </div>
+          )}
         </DashboardPanel>
 
         <div className="space-y-3">
-          <DashboardPanel title="Most day active">
-            <ChartContainer config={dayChartConfig} className="h-[160px] w-full aspect-auto">
-              <BarChart data={data.activeByDay} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
-                <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                <XAxis dataKey="day" tickLine={false} axisLine={false} />
-                <YAxis tickLine={false} axisLine={false} width={20} />
-                <Bar dataKey="count" fill="var(--color-count)" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ChartContainer>
-          </DashboardPanel>
+          {!isArtisan && (
+            <DashboardPanel title="Most day active">
+              <ChartContainer config={dayChartConfig} className="h-[160px] w-full aspect-auto">
+                <BarChart data={data.activeByDay} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+                  <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                  <XAxis dataKey="day" tickLine={false} axisLine={false} />
+                  <YAxis tickLine={false} axisLine={false} width={20} />
+                  <Bar dataKey="count" fill="var(--color-count)" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ChartContainer>
+            </DashboardPanel>
+          )}
 
-          <DashboardPanel title="Tour approval rate">
-            <div className="flex items-center justify-center">
-              <div className="relative h-28 w-28">
-                <ChartContainer
-                  config={{ rate: { label: "Rate", color: "oklch(0.34 0.045 175)" } }}
-                  className="h-full w-full aspect-square"
-                >
-                  <PieChart>
-                    <Pie
-                      data={[
-                        { name: "approved", value: data.engagementRate },
-                        { name: "remaining", value: 100 - data.engagementRate },
-                      ]}
-                      dataKey="value"
-                      innerRadius={40}
-                      outerRadius={52}
-                      startAngle={90}
-                      endAngle={-270}
-                      strokeWidth={0}
-                    >
-                      <Cell fill="var(--color-rate)" />
-                      <Cell fill="hsl(var(--muted))" />
-                    </Pie>
-                  </PieChart>
-                </ChartContainer>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="font-display text-xl font-semibold">{data.engagementRate}%</span>
+          {isOwner ? (
+            <DashboardPanel title="Tour approval rate">
+              <div className="flex items-center justify-center">
+                <div className="relative h-28 w-28">
+                  <ChartContainer
+                    config={{ rate: { label: "Rate", color: "oklch(0.34 0.045 175)" } }}
+                    className="h-full w-full aspect-square"
+                  >
+                    <PieChart>
+                      <Pie
+                        data={[
+                          { name: "approved", value: data.engagementRate },
+                          { name: "remaining", value: Math.max(0, 100 - data.engagementRate) },
+                        ]}
+                        dataKey="value"
+                        innerRadius={40}
+                        outerRadius={52}
+                        startAngle={90}
+                        endAngle={-270}
+                        strokeWidth={0}
+                      >
+                        <Cell fill="var(--color-rate)" />
+                        <Cell fill="hsl(var(--muted))" />
+                      </Pie>
+                    </PieChart>
+                  </ChartContainer>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="font-display text-xl font-semibold">{data.engagementRate}%</span>
+                  </div>
                 </div>
               </div>
-            </div>
-            <p className="mt-1 text-center text-[11px] text-muted-foreground">On track for 80% target</p>
-            <Link
-              href="/dashboard/bookings"
-              className="mt-2 block text-center text-xs font-medium text-primary hover:underline"
-            >
-              Show details
-            </Link>
-          </DashboardPanel>
+              <p className="mt-1 text-center text-[11px] text-muted-foreground">
+                {data.tourApprovalApproved}/{data.tourApprovalTotal} tour requests approved
+              </p>
+              <Link
+                href="/dashboard/bookings"
+                className="mt-2 block text-center text-xs font-medium text-primary hover:underline"
+              >
+                Manage bookings
+              </Link>
+            </DashboardPanel>
+          ) : isArtisan ? (
+            <DashboardPanel title="Artisan workspace">
+              <div className="flex flex-col gap-2 text-sm">
+                <Link href="/dashboard/jobs" className="text-primary hover:underline">
+                  Service jobs
+                </Link>
+                <Link href="/dashboard/services" className="text-primary hover:underline">
+                  My services profile
+                </Link>
+                <Link href="/dashboard/onboarding/artisan" className="text-primary hover:underline">
+                  Onboarding / KYC
+                </Link>
+                <Link href="/dashboard/messages" className="text-primary hover:underline">
+                  Messages
+                </Link>
+              </div>
+            </DashboardPanel>
+          ) : (
+            <DashboardPanel title="Quick links">
+              <div className="flex flex-col gap-2 text-sm">
+                <Link href="/properties" className="text-primary hover:underline">
+                  Browse homes
+                </Link>
+                <Link href="/services" className="text-primary hover:underline">
+                  Browse services
+                </Link>
+                <Link href="/dashboard/messages" className="text-primary hover:underline">
+                  Messages
+                </Link>
+              </div>
+            </DashboardPanel>
+          )}
         </div>
       </div>
 
+      {!isArtisan && (
       <div className="grid gap-3 xl:grid-cols-3">
         <DashboardDataTable
           className="xl:col-span-2"
@@ -235,6 +290,7 @@ export function DashboardOverview({ data }: DashboardOverviewProps) {
                 <TableRow key={p.id} className="border-border/40 hover:bg-muted/20">
                   <DashboardTableCell>
                     <Link href={`/properties/${p.id}`} className="flex items-center gap-2.5">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={imageSrc(resolveImage(p.image))}
                         alt={p.title}
@@ -298,25 +354,47 @@ export function DashboardOverview({ data }: DashboardOverviewProps) {
             )}
             {(role === "USER" || role === "AGENT") && (
               <Link
-                href="/artisans"
+                href="/services"
                 className="rounded-lg border border-border px-3 py-2 text-center text-xs font-medium hover:bg-muted"
               >
-                Artisan hub
-              </Link>
-            )}
-            {isArtisan && (
-              <Link
-                href="/dashboard/jobs"
-                className="rounded-lg border border-border px-3 py-2 text-center text-xs font-medium hover:bg-muted"
-              >
-                View jobs
+                Services hub
               </Link>
             )}
           </div>
         </DashboardPanel>
       </div>
+      )}
 
-      <AddWidgetModal open={widgetOpen} onOpenChange={setWidgetOpen} />
+      {isArtisan && (
+        <DashboardPanel>
+          <div className="flex items-center gap-2">
+            <div className="grid h-8 w-8 place-items-center rounded-full bg-primary/15">
+              <Wrench size={14} className="text-primary" />
+            </div>
+            <div>
+              <p className="text-sm font-medium">Service snapshot</p>
+              <p className="text-[11px] text-muted-foreground">Jobs & payouts</p>
+            </div>
+          </div>
+          <div className="mt-3 rounded-lg bg-muted/40 p-3 text-xs leading-relaxed text-muted-foreground">
+            {data.trustSummary}
+          </div>
+          <div className="mt-3 grid gap-1.5 sm:grid-cols-2">
+            <Link
+              href="/dashboard/jobs"
+              className="rounded-lg bg-primary px-3 py-2 text-center text-xs font-medium text-primary-foreground hover:brightness-105"
+            >
+              Open service jobs
+            </Link>
+            <Link
+              href="/dashboard/services"
+              className="rounded-lg border border-border px-3 py-2 text-center text-xs font-medium hover:bg-muted"
+            >
+              Edit service profile
+            </Link>
+          </div>
+        </DashboardPanel>
+      )}
     </div>
   );
 }

@@ -3,6 +3,9 @@ import { requireRole } from "@/lib/auth/roles";
 import { getSavedProperties, toggleSavedProperty } from "@/lib/actions/saved-properties";
 import { DashboardSection } from "@/components/dashboard/dashboard-section";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { formatMoney } from "@/lib/currency";
+import { imageSrc, resolveImage } from "@/lib/properties";
 import { revalidatePath } from "next/cache";
 
 async function unsave(propertyId: string) {
@@ -25,25 +28,58 @@ export default async function SavedPage() {
           </Link>
         </div>
       ) : (
-        <div className="grid gap-3 md:grid-cols-2">
-          {saved.map((s) => (
-            <div
-              key={s.id}
-              className="rounded-2xl border border-border bg-card p-4 flex items-center justify-between gap-3"
-            >
-              <div className="min-w-0">
-                <Link href={`/properties/${s.property.id}`} className="font-display font-semibold hover:underline truncate block">
-                  {s.property.title}
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {saved.map((s) => {
+            const p = s.property;
+            return (
+              <article
+                key={s.id}
+                className="group overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm"
+              >
+                <Link href={`/properties/${p.id}`} className="block">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={imageSrc(resolveImage(p.image))}
+                    alt={p.title}
+                    className="aspect-[16/11] w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+                  />
                 </Link>
-                <p className="text-sm text-muted-foreground truncate">{s.property.location}</p>
-              </div>
-              <form action={unsave.bind(null, s.propertyId)}>
-                <Button type="submit" variant="outline" size="sm">
-                  Remove
-                </Button>
-              </form>
-            </div>
-          ))}
+                <div className="space-y-2 p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <Link
+                      href={`/properties/${p.id}`}
+                      className="font-display font-semibold leading-tight hover:underline line-clamp-2"
+                    >
+                      {p.title}
+                    </Link>
+                    {p.verificationStatus === "VERIFIED" && (
+                      <Badge variant="secondary" className="shrink-0 text-[10px]">
+                        Verified
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground line-clamp-1">{p.location}</p>
+                  <p className="text-sm font-medium">
+                    {formatMoney(p.price)}
+                    {p.type === "FOR_RENT" ? " / mo" : ""}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {p.beds} bed · {p.baths} bath · {p.area} m²
+                  </p>
+                  <div className="flex gap-2 pt-1">
+                    <Button size="sm" className="h-8 text-xs" asChild>
+                      <Link href={`/properties/${p.id}`}>View details</Link>
+                    </Button>
+                    <form action={unsave.bind(null, s.propertyId)}>
+                      <Button type="submit" variant="outline" size="sm" className="h-8 text-xs">
+                        Remove
+                      </Button>
+                    </form>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
         </div>
       )}
     </DashboardSection>

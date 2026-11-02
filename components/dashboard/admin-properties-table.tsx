@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { MoreHorizontal } from "lucide-react";
-import { decidePropertyVerification } from "@/lib/actions/verification";
-import { deletePropertyAsAdmin, setPropertyFeatured } from "@/lib/actions/admin";
+import { adminDeleteProperty, adminSetPropertyVerification } from "@/lib/actions/admin-properties";
+import { setPropertyFeatured } from "@/lib/actions/admin";
 import { formatMoney } from "@/lib/currency";
+import { AdminStatusBadge } from "@/components/admin/admin-status-badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -40,7 +41,7 @@ type PropertyRow = {
 
 export function AdminPropertiesTable({ properties }: { properties: PropertyRow[] }) {
   async function verify(id: string, decision: "VERIFIED" | "REJECTED") {
-    const result = await decidePropertyVerification(id, decision);
+    const result = await adminSetPropertyVerification(id, decision);
     if (result.error) toast.error(result.error);
     else toast.success(`Property ${decision.toLowerCase()}`);
   }
@@ -53,7 +54,7 @@ export function AdminPropertiesTable({ properties }: { properties: PropertyRow[]
 
   async function remove(id: string) {
     if (!confirm("Delete this property permanently?")) return;
-    const result = await deletePropertyAsAdmin(id);
+    const result = await adminDeleteProperty(id);
     if (result.error) toast.error(result.error);
     else toast.success("Property deleted");
   }
@@ -83,7 +84,7 @@ export function AdminPropertiesTable({ properties }: { properties: PropertyRow[]
                     className="h-9 w-9 rounded-md object-cover shrink-0"
                   />
                   <div className="min-w-0">
-                    <Link href={`/properties/${p.id}`} className="font-medium leading-tight hover:underline">
+                    <Link href={`/admin/properties/${p.id}`} className="font-medium leading-tight hover:underline">
                       {p.title}
                     </Link>
                     <p className="text-[11px] text-muted-foreground">
@@ -103,14 +104,16 @@ export function AdminPropertiesTable({ properties }: { properties: PropertyRow[]
                 {formatMoney(p.price)}
               </DashboardTableCell>
               <DashboardTableCell>
-                <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase">
-                  {p.verificationStatus}
-                </span>
+                <AdminStatusBadge status={p.verificationStatus} />
               </DashboardTableCell>
               <DashboardTableCell className="text-right tabular-nums">
                 {p._count.bookings}
               </DashboardTableCell>
               <DashboardTableCell className="text-right">
+                <div className="inline-flex items-center gap-1">
+                <Button variant="outline" size="sm" className="h-7 text-xs" asChild>
+                  <Link href={`/admin/properties/${p.id}`}>Edit</Link>
+                </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="h-7 w-7">
@@ -118,6 +121,13 @@ export function AdminPropertiesTable({ properties }: { properties: PropertyRow[]
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild>
+                      <Link href={`/admin/properties/${p.id}`}>Edit details</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href={`/properties/${p.id}`} target="_blank">View public page</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => verify(p.id, "VERIFIED")}>
                       Approve verification
                     </DropdownMenuItem>
@@ -137,6 +147,7 @@ export function AdminPropertiesTable({ properties }: { properties: PropertyRow[]
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
+                </div>
               </DashboardTableCell>
             </TableRow>
           ))}

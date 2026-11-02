@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createAmenity, updateAmenity } from "@/lib/actions/amenities";
+import { createAmenity, deleteAmenity, updateAmenity } from "@/lib/actions/amenities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -20,6 +20,7 @@ type AmenityRow = {
   name: string;
   slug: string;
   active: boolean;
+  _count?: { properties: number };
 };
 
 export function AdminAmenitiesTable({ amenities }: { amenities: AmenityRow[] }) {
@@ -43,6 +44,17 @@ export function AdminAmenitiesTable({ amenities }: { amenities: AmenityRow[] }) 
     const result = await updateAmenity(id, { name: next });
     if (result.error) toast.error(result.error);
     else toast.success("Renamed");
+  }
+
+  async function remove(id: string, label: string, usage: number) {
+    const msg =
+      usage > 0
+        ? `Delete "${label}"? It will be removed from ${usage} propert${usage === 1 ? "y" : "ies"}.`
+        : `Delete "${label}"?`;
+    if (!confirm(msg)) return;
+    const result = await deleteAmenity(id);
+    if ("error" in result && result.error) toast.error(result.error);
+    else toast.success("Amenity deleted");
   }
 
   async function toggle(id: string, active: boolean) {
@@ -72,6 +84,7 @@ export function AdminAmenitiesTable({ amenities }: { amenities: AmenityRow[] }) 
               <DashboardTableHead>Name</DashboardTableHead>
               <DashboardTableHead>Slug</DashboardTableHead>
               <DashboardTableHead>Status</DashboardTableHead>
+              <DashboardTableHead className="text-right">Used by</DashboardTableHead>
               <DashboardTableHead className="text-right">Actions</DashboardTableHead>
             </TableRow>
           </TableHeader>
@@ -89,6 +102,9 @@ export function AdminAmenitiesTable({ amenities }: { amenities: AmenityRow[] }) 
                     {a.active ? "Active" : "Inactive"}
                   </span>
                 </DashboardTableCell>
+                <DashboardTableCell className="text-right tabular-nums text-muted-foreground">
+                  {a._count?.properties ?? 0}
+                </DashboardTableCell>
                 <DashboardTableCell className="text-right">
                   <div className="inline-flex gap-1">
                     <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => rename(a.id, a.name)}>
@@ -102,13 +118,21 @@ export function AdminAmenitiesTable({ amenities }: { amenities: AmenityRow[] }) 
                     >
                       {a.active ? "Deactivate" : "Activate"}
                     </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs text-destructive"
+                      onClick={() => remove(a.id, a.name, a._count?.properties ?? 0)}
+                    >
+                      Delete
+                    </Button>
                   </div>
                 </DashboardTableCell>
               </TableRow>
             ))}
             {amenities.length === 0 && (
               <TableRow>
-                <DashboardTableCell colSpan={4} className="py-8 text-center text-muted-foreground">
+                <DashboardTableCell colSpan={5} className="py-8 text-center text-muted-foreground">
                   No amenities yet.
                 </DashboardTableCell>
               </TableRow>

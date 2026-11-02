@@ -26,10 +26,11 @@ export async function GET(req: NextRequest) {
     },
   });
 
-  const next =
-    user.role === "ARTISAN"
-      ? "/dashboard/onboarding/artisan?verified=1"
-      : "/dashboard?verified=1";
+  const loginPath = user.role === "ADMIN" ? "/admin/login" : "/login";
+  const params = new URLSearchParams({
+    verified: "1",
+    email: user.email,
+  });
 
-  return NextResponse.redirect(`${base}${next}`);
+  return NextResponse.redirect(`${base}${loginPath}?${params.toString()}`);
 }

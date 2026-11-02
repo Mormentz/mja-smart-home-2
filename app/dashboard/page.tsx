@@ -6,7 +6,7 @@ import { DashboardOverview } from "@/components/dashboard/dashboard-overview";
 export default async function DashboardPage() {
   const session = await requireAuth();
   if (session.user.role === "ADMIN") {
-    redirect("/dashboard/admin");
+    redirect("/admin/login");
   }
   const data = await getDashboardData(session.user.id, session.user.role, session.user.name);
 

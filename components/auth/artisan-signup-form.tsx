@@ -1,16 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Eye, EyeOff, Lock, Mail, User } from "lucide-react";
-import { signIn } from "next-auth/react";
 import { registerUser } from "@/lib/actions/auth";
 import { AuthField, AuthPrimaryButton } from "@/components/auth/auth-field";
 import { Checkbox } from "@/components/ui/checkbox";
 
 export function ArtisanSignupForm() {
-  const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -36,21 +33,7 @@ export function ArtisanSignupForm() {
       return;
     }
 
-    const signInResult = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
-
-    setLoading(false);
-
-    if (signInResult?.error) {
-      setError("Account created but sign-in failed. Please log in.");
-      return;
-    }
-
-    router.push("/dashboard/onboarding/artisan");
-    router.refresh();
+    window.location.assign(`/login?verify=1&email=${encodeURIComponent(email.toLowerCase())}`);
   }
 
   return (
@@ -133,7 +116,11 @@ export function ArtisanSignupForm() {
         </Link>
         {" · "}
         <Link href="/signup" className="font-semibold text-ink hover:underline">
-          Customer / agent signup
+          Customer signup
+        </Link>
+        {" · "}
+        <Link href="/signup/agent" className="font-semibold text-ink hover:underline">
+          Agent signup
         </Link>
       </p>
     </form>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { MoreHorizontal } from "lucide-react";
 import { updateServiceJobStatus } from "@/lib/actions/service-jobs";
 import { createReview } from "@/lib/actions/reviews";
@@ -12,6 +13,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import {
   DashboardDataTable,
   DashboardEmptyState,
@@ -35,12 +43,14 @@ type Job = {
   artisan?: { id: string; name: string | null; email: string };
   customer?: { id: string; name: string | null; email: string };
   property?: { id: string; title: string } | null;
+  escrowPayments?: { id: string; amount: number; status: string; purpose: string }[];
 };
 
 export function JobsPanel({ jobs, mode }: { jobs: Job[]; mode: "customer" | "artisan" }) {
   const [reviewFor, setReviewFor] = useState<string | null>(null);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
+  const [detail, setDetail] = useState<Job | null>(null);
 
   async function setStatus(id: string, status: "ACCEPTED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED") {
     const result = await updateServiceJobStatus(id, status);
@@ -69,8 +79,8 @@ export function JobsPanel({ jobs, mode }: { jobs: Job[]; mode: "customer" | "art
       <DashboardEmptyState>
         No service jobs yet.{" "}
         {mode === "customer" && (
-          <a href="/artisans" className="text-primary underline">
-            Browse artisans
+          <a href="/services" className="text-primary underline">
+            Browse services
           </a>
         )}
       </DashboardEmptyState>
@@ -104,11 +114,19 @@ export function JobsPanel({ jobs, mode }: { jobs: Job[]; mode: "customer" | "art
               return (
                 <TableRow key={job.id} className="border-border/40">
                   <DashboardTableCell>
-                    <p className="font-medium leading-tight line-clamp-1">{job.description}</p>
-                    <p className="text-[11px] text-muted-foreground">
-                      {job.urgency}
-                      {job.property ? ` · ${job.property.title}` : ""}
-                    </p>
+                    <button
+                      type="button"
+                      className="text-left"
+                      onClick={() => setDetail(job)}
+                    >
+                      <p className="font-medium leading-tight line-clamp-1 hover:underline">
+                        {job.description}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {job.urgency}
+                        {job.property ? ` · ${job.property.title}` : ""}
+                      </p>
+                    </button>
                   </DashboardTableCell>
                   <DashboardTableCell className="text-xs">{counterparty}</DashboardTableCell>
                   <DashboardTableCell>
@@ -124,6 +142,9 @@ export function JobsPanel({ jobs, mode }: { jobs: Job[]; mode: "customer" | "art
                   </DashboardTableCell>
                   <DashboardTableCell className="text-right">
                     <div className="inline-flex items-center gap-1">
+                      <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setDetail(job)}>
+                        Details
+                      </Button>
                       {mode === "artisan" && job.status === "QUOTED" && (
                         <Button size="sm" className="h-7 text-xs" onClick={() => setStatus(job.id, "ACCEPTED")}>
                           Accept
@@ -205,6 +226,81 @@ export function JobsPanel({ jobs, mode }: { jobs: Job[]; mode: "customer" | "art
             </div>
           </div>
         ))}
+
+      <Sheet open={!!detail} onOpenChange={(open) => !open && setDetail(null)}>
+        <SheetContent className="sm:max-w-lg overflow-y-auto">
+          {detail && (
+            <>
+              <SheetHeader>
+                <SheetTitle>Service job details</SheetTitle>
+                <SheetDescription>Full request for {mode === "artisan" ? "you" : "your booking"}</SheetDescription>
+              </SheetHeader>
+              <div className="mt-4 space-y-4 text-sm">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Description</p>
+                  <p className="mt-1 whitespace-pre-wrap">{detail.description}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Status</p>
+                    <p className="font-medium">{detail.status}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Urgency</p>
+                    <p className="font-medium">{detail.urgency}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Estimate</p>
+                    <p className="font-medium">
+                      {detail.priceEstimate != null ? formatMoney(detail.priceEstimate) : "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">ETA</p>
+                    <p className="font-medium">
+                      {detail.etaMinutes != null ? `${detail.etaMinutes} minutes` : "—"}
+                    </p>
+                  </div>
+                </div>
+                {detail.property && (
+                  <p>
+                    Property:{" "}
+                    <Link href={`/properties/${detail.property.id}`} className="text-primary underline">
+                      {detail.property.title}
+                    </Link>
+                  </p>
+                )}
+                {mode === "customer" && detail.artisan && (
+                  <div className="rounded-xl border p-3">
+                    <p className="text-xs text-muted-foreground">Professional</p>
+                    <p className="font-medium">{detail.artisan.name ?? detail.artisan.email}</p>
+                    <Button size="sm" variant="link" className="h-auto px-0" asChild>
+                      <Link href={`/services/${detail.artisan.id}`}>View profile</Link>
+                    </Button>
+                  </div>
+                )}
+                {mode === "artisan" && detail.customer && (
+                  <div className="rounded-xl border p-3">
+                    <p className="text-xs text-muted-foreground">Customer</p>
+                    <p className="font-medium">{detail.customer.name ?? detail.customer.email}</p>
+                  </div>
+                )}
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Escrow</p>
+                  <ul className="mt-1 space-y-1 text-muted-foreground">
+                    {(detail.escrowPayments ?? []).length === 0 && <li>No escrow hold yet</li>}
+                    {(detail.escrowPayments ?? []).map((e) => (
+                      <li key={e.id}>
+                        {formatMoney(e.amount)} · {e.purpose} · {e.status}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

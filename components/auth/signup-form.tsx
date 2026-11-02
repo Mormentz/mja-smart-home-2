@@ -3,24 +3,12 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Eye, EyeOff, Lock, Mail, User } from "lucide-react";
-import { signIn } from "next-auth/react";
+import { Eye, EyeOff, Home, Lock, Mail, User, Wrench } from "lucide-react";
 import { registerUser } from "@/lib/actions/auth";
-import { roleLabel } from "@/lib/auth/role-labels";
 import { AuthDivider, AuthField, AuthPrimaryButton } from "@/components/auth/auth-field";
 import { GoogleAuthButton } from "@/components/auth/google-auth-button";
 import { Checkbox } from "@/components/ui/checkbox";
-
-const ROLES = ["USER", "AGENT"] as const;
-type SignupRole = (typeof ROLES)[number];
-
-function parseRole(value: string | null): SignupRole | "ARTISAN" {
-  if (value === "ARTISAN") return "ARTISAN";
-  if (value && (ROLES as readonly string[]).includes(value)) {
-    return value as SignupRole;
-  }
-  return "USER";
-}
+import { cn } from "@/lib/utils";
 
 export function SignupForm() {
   const router = useRouter();
@@ -28,10 +16,6 @@ export function SignupForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<SignupRole>(() => {
-    const parsed = parseRole(searchParams.get("role"));
-    return parsed === "ARTISAN" ? "USER" : parsed;
-  });
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,12 +23,14 @@ export function SignupForm() {
   const [hasGoogle, setHasGoogle] = useState(false);
 
   useEffect(() => {
-    const next = parseRole(searchParams.get("role"));
-    if (next === "ARTISAN") {
+    const role = searchParams.get("role");
+    if (role === "ARTISAN") {
       router.replace("/signup/artisan");
       return;
     }
-    setRole(next);
+    if (role === "AGENT") {
+      router.replace("/signup/agent");
+    }
   }, [searchParams, router]);
 
   useEffect(() => {
@@ -64,28 +50,15 @@ export function SignupForm() {
     setLoading(true);
     setError(null);
 
-    const result = await registerUser({ name, email, password, role });
+    const result = await registerUser({ name, email, password, role: "USER" });
     if (result.error) {
       setLoading(false);
       setError(result.error);
       return;
     }
 
-    const signInResult = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
-
-    setLoading(false);
-
-    if (signInResult?.error) {
-      setError("Account created but sign-in failed. Please log in.");
-      return;
-    }
-
-    router.push("/dashboard");
-    router.refresh();
+    // Hard navigate so we don't stall on soft-nav after the server action
+    window.location.assign(`/login?verify=1&email=${encodeURIComponent(email.toLowerCase())}`);
   }
 
   return (
@@ -144,32 +117,38 @@ export function SignupForm() {
         />
       </div>
 
-      <div className="pt-4 space-y-2">
-        <label htmlFor="role" className="text-sm font-medium text-ink/80">
-          I am a
-        </label>
-        <select
-          id="role"
-          value={role}
-          onChange={(e) => setRole(e.target.value as SignupRole)}
-          className="w-full h-12 rounded-full border border-border/80 bg-white px-4 text-sm outline-none focus:border-ink/30 focus:ring-2 focus:ring-ink/5"
-        >
-          {ROLES.map((r) => (
-            <option key={r} value={r}>
-              {roleLabel(r)}
-            </option>
-          ))}
-        </select>
-        <p className="text-xs text-muted-foreground">
-          {role === "USER" && "Rent or buy homes, use escrow, and hire artisans."}
-          {role === "AGENT" && "List properties for sale or rent (covers landlords)."}
+      <div className="pt-5">
+        <p className="mb-2.5 text-center text-[11px] uppercase tracking-wide text-muted-foreground">
+          Or join as
         </p>
-        <p className="text-xs text-muted-foreground">
-          Are you a trade pro?{" "}
-          <Link href="/signup/artisan" className="font-semibold text-ink underline-offset-2 hover:underline">
-            Join Artisans Hub
+        <div className="grid grid-cols-2 gap-2.5">
+          <Link
+            href="/signup/agent"
+            className={cn(
+              "group flex flex-col items-center gap-2 rounded-2xl border border-border/70 bg-muted/30 px-3 py-3.5 text-center transition",
+              "hover:border-ink/25 hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/15",
+            )}
+          >
+            <span className="grid h-10 w-10 place-items-center rounded-xl bg-ink text-ink-foreground transition group-hover:scale-[1.03]">
+              <Home size={18} strokeWidth={1.75} />
+            </span>
+            <span className="text-sm font-semibold text-ink">Agent</span>
+            <span className="text-[11px] leading-snug text-muted-foreground">List & manage homes</span>
           </Link>
-        </p>
+          <Link
+            href="/signup/artisan"
+            className={cn(
+              "group flex flex-col items-center gap-2 rounded-2xl border border-border/70 bg-muted/30 px-3 py-3.5 text-center transition",
+              "hover:border-ink/25 hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/15",
+            )}
+          >
+            <span className="grid h-10 w-10 place-items-center rounded-xl bg-ink text-ink-foreground transition group-hover:scale-[1.03]">
+              <Wrench size={18} strokeWidth={1.75} />
+            </span>
+            <span className="text-sm font-semibold text-ink">Services</span>
+            <span className="text-[11px] leading-snug text-muted-foreground">Join as a pro</span>
+          </Link>
+        </div>
       </div>
 
       <label className="flex items-start gap-3 pt-5 cursor-pointer">

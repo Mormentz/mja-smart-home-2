@@ -53,10 +53,9 @@ export async function createListing(data: z.infer<typeof listingSchema>) {
     return { error: "Only agents can manage listings" };
   }
 
-  const agentUser = await prisma.user.findUnique({ where: { id: session.user.id } });
-  if (agentUser?.kycStatus !== "VERIFIED") {
-    return { error: "Complete KYC verification before publishing listings" };
-  }
+  const { kycGateError, requireProTier3 } = await import("@/lib/auth/kyc-gate");
+  const kyc = await requireProTier3(session.user.id);
+  if (!kyc.ok) return kycGateError(kyc);
 
   const parsed = listingSchema.safeParse(data);
   if (!parsed.success) {
@@ -99,6 +98,10 @@ export async function updateListing(
   if (!session?.user?.id) {
     return { error: "Unauthorized" };
   }
+
+  const { kycGateError, requireProTier3 } = await import("@/lib/auth/kyc-gate");
+  const kyc = await requireProTier3(session.user.id);
+  if (!kyc.ok) return kycGateError(kyc);
 
   const listing = await prisma.property.findUnique({ where: { id } });
   if (!listing || listing.ownerId !== session.user.id) {

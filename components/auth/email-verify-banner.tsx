@@ -1,17 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { resendVerificationEmail } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
+function formatCooldown(seconds: number) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  if (m <= 0) return `${s}s`;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
 export function EmailVerifyBanner({ email }: { email: string }) {
   const [loading, setLoading] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const id = window.setInterval(() => setCooldown((c) => Math.max(0, c - 1)), 1000);
+    return () => window.clearInterval(id);
+  }, [cooldown > 0]);
 
   async function resend() {
     setLoading(true);
     const result = await resendVerificationEmail();
     setLoading(false);
+    if ("retryAfterSeconds" in result && typeof result.retryAfterSeconds === "number") {
+      setCooldown(result.retryAfterSeconds);
+    }
     if (result.error) toast.error(result.error);
     else if (result.alreadyVerified) toast.success("Email already verified");
     else toast.success("Verification email sent");
@@ -29,10 +46,14 @@ export function EmailVerifyBanner({ email }: { email: string }) {
         size="sm"
         variant="secondary"
         className="mt-3"
-        disabled={loading}
+        disabled={loading || cooldown > 0}
         onClick={resend}
       >
-        {loading ? "Sending…" : "Resend verification"}
+        {loading
+          ? "Sending…"
+          : cooldown > 0
+            ? `Resend in ${formatCooldown(cooldown)}`
+            : "Resend verification"}
       </Button>
     </div>
   );

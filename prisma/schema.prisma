@@ -74,6 +74,7 @@ enum LeaseStatus {
 }
 
 enum EscrowStatus {
+  PENDING
   HELD
   RELEASED
   REFUNDED
@@ -113,14 +114,121 @@ enum KycDocType {
   CAC
 }
 
+enum IdDocumentType {
+  NIN
+  PASSPORT
+  DRIVERS_LICENCE
+  VOTERS_CARD
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  TEMPORARY
+  FREELANCE
+  INTERNSHIP
+  APPRENTICESHIP
+  REMOTE
+  HYBRID
+  LIVE_IN
+  WEEKEND
+  DAILY_PAID
+}
+
+enum WorkArrangement {
+  ONSITE
+  REMOTE
+  HYBRID
+  LIVE_IN
+  FLEXIBLE
+}
+
+enum CvAccessLevel {
+  PRIVATE
+  APPLICATION
+  AUTHORIZED
+}
+
+enum ContactRequestStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  CANCELLED
+}
+
+enum EmployerKind {
+  BUSINESS
+  INDIVIDUAL
+}
+
+enum EquipmentCondition {
+  BRAND_NEW
+  EXCELLENT
+  GOOD
+  FAIR
+  REQUIRES_MAINTENANCE
+}
+
+enum EquipmentListingStatus {
+  DRAFT
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum RentalBookingStatus {
+  REQUESTED
+  ACCEPTED
+  PAYMENT_PENDING
+  CONFIRMED
+  HANDOVER
+  ACTIVE
+  RETURN_PENDING
+  COMPLETED
+  CANCELLED
+  DISPUTED
+}
+
+enum RentalDisputeType {
+  NOT_DELIVERED
+  WRONG_EQUIPMENT
+  FAULTY
+  MISSING_ACCESSORIES
+  DAMAGE
+  LATE_RETURN
+  PAYMENT
+  DEPOSIT
+  SUSPECTED_FRAUD
+  OTHER
+}
+
+enum RentalDisputeStatus {
+  OPEN
+  UNDER_REVIEW
+  RESOLVED
+  CLOSED
+}
+
+enum DocReviewStatus {
+  PENDING
+  UNDER_REVIEW
+  VERIFIED
+  REJECTED
+  RESUBMISSION_REQUIRED
+}
+
 model User {
   id               String              @id @default(cuid())
   name             String?
   email            String              @unique
-  emailVerified    DateTime?
-  emailVerifyToken String?
-  image            String?
-  passwordHash     String?
+  emailVerified         DateTime?
+  emailVerifyToken      String?
+  passwordResetToken    String?
+  passwordResetExpires  DateTime?
+  image                 String?
+  passwordHash          String?
   role             Role                @default(USER)
   active           Boolean             @default(true)
   phone            String?
@@ -156,6 +264,25 @@ model User {
   reviewsReceived    Review[]        @relation("ReviewTarget")
   savedProperties    SavedProperty[]
   moveInRequests     MoveInRequest[]
+
+  jobSeekerProfile      JobSeekerProfile?
+  employerProfile       EmployerProfile?
+  equipmentOwnerProfile EquipmentOwnerProfile?
+  rentalCustomerProfile RentalCustomerProfile?
+  employmentVacancies   EmploymentVacancy[]    @relation("VacancyEmployerUser")
+  jobApplications       JobApplication[]       @relation("ApplicationSeekerUser")
+  contactRequestsSent   ContactRequest[]       @relation("ContactRequestEmployer")
+  contactRequestsRecv   ContactRequest[]       @relation("ContactRequestSeeker")
+  cvAccessGrants        CvAccessGrant[]        @relation("CvGrantEmployer")
+  profileViewsAsViewer  ProfileView[]          @relation("ProfileViewer")
+  auditLogs             AuditLog[]
+  privacyRequests       PrivacyRequest[]
+  rentalBookingsAsCustomer EquipmentRentalBooking[] @relation("RentalCustomerUser")
+  rentalDisputesOpened  RentalDispute[]        @relation("DisputeOpener")
+  flaggedAccounts       FlaggedAccount[]       @relation("FlaggedUser")
+  walletAccount         WalletAccount?
+  bankAccounts          BankAccount[]
+  withdrawalRequests    WithdrawalRequest[]
 }
 
 model ServiceCategory {
@@ -412,26 +539,113 @@ model Lease {
 }
 
 model EscrowPayment {
-  id           String        @id @default(cuid())
-  amount       Int
-  status       EscrowStatus  @default(HELD)
-  purpose      EscrowPurpose
-  payerId      String
-  leaseId      String?
-  serviceJobId String?
-  note         String?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  releasedAt   DateTime?
-  refundedAt   DateTime?
+  id                   String        @id @default(cuid())
+  amount               Int
+  status               EscrowStatus  @default(PENDING)
+  purpose              EscrowPurpose
+  payerId              String
+  leaseId              String?
+  serviceJobId         String?
+  note                 String?
+  provider             String?
+  providerRef          String?       @unique
+  accessCode           String?
+  paidAt               DateTime?
+  agentHandedOverAt    DateTime?
+  agentHandedOverById  String?
+  customerReceivedAt   DateTime?
+  customerReceivedById String?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  releasedAt           DateTime?
+  refundedAt           DateTime?
 
   payer      User        @relation("EscrowPayer", fields: [payerId], references: [id], onDelete: Cascade)
   lease      Lease?      @relation(fields: [leaseId], references: [id], onDelete: SetNull)
   serviceJob ServiceJob? @relation(fields: [serviceJobId], references: [id], onDelete: SetNull)
+  ledgerEntries WalletLedgerEntry[]
 
   @@index([payerId])
   @@index([leaseId])
   @@index([serviceJobId])
+  @@index([status])
+}
+
+enum WalletLedgerType {
+  CREDIT_ESCROW
+  WITHDRAWAL
+  ADJUSTMENT
+  WITHDRAWAL_REVERSAL
+}
+
+enum WithdrawalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  PAID
+}
+
+model WalletAccount {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  availableBalance   Int      @default(0)
+  pendingWithdrawal  Int      @default(0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  user    User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ledger  WalletLedgerEntry[]
+}
+
+model WalletLedgerEntry {
+  id              String           @id @default(cuid())
+  accountId       String
+  amount          Int
+  type            WalletLedgerType
+  escrowPaymentId String?
+  note            String?
+  createdAt       DateTime         @default(now())
+
+  account WalletAccount  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  escrow  EscrowPayment? @relation(fields: [escrowPaymentId], references: [id], onDelete: SetNull)
+
+  @@index([accountId])
+  @@index([escrowPaymentId])
+}
+
+model BankAccount {
+  id            String   @id @default(cuid())
+  userId        String
+  bankName      String
+  accountName   String
+  accountNumber String
+  bankCode      String?
+  isDefault     Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  withdrawals  WithdrawalRequest[]
+
+  @@index([userId])
+}
+
+model WithdrawalRequest {
+  id            String           @id @default(cuid())
+  userId        String
+  bankAccountId String
+  amount        Int
+  status        WithdrawalStatus @default(PENDING)
+  adminNote     String?
+  processedAt   DateTime?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bankAccount BankAccount @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
 }
 
 model ServiceJob {
@@ -510,4 +724,594 @@ model MoveInRequest {
 
   @@index([userId])
   @@index([propertyId])
+}
+
+model HcIdCounter {
+  id        String @id @default(cuid())
+  kind      String
+  region    String
+  lastSeq   Int    @default(0)
+
+  @@unique([kind, region])
+}
+
+model JobSeekerProfile {
+  id                    String              @id @default(cuid())
+  userId                String              @unique
+  hcId                  String              @unique
+  registrationStep      Int                 @default(0)
+  submittedAt           DateTime?
+  profileHidden         Boolean             @default(false)
+
+  // Section A — personal (private)
+  fullName              String?
+  dateOfBirth           DateTime?
+  gender                String?
+  nationality           String?
+  stateOfResidence      String?
+  lgaName               String?
+  residentialAddress    String?             @db.Text
+  cityTown              String?
+  phone                 String?
+  whatsapp              String?
+  email                 String?
+  passportPhotoUrl      String?
+  preferredLanguage     String?
+  altContactNumber      String?
+  idDocumentType        IdDocumentType?
+  idDocumentUrl         String?
+  idNumberEncrypted     String?
+  identityStatus        VerificationStatus  @default(UNVERIFIED)
+  identityNote          String?
+  identityVerifiedAt    DateTime?
+  identityProviderRef   String?
+
+  // Section B — preferences (semi-public)
+  preferredJobTitle     String?
+  primaryJobCategory    String?
+  secondaryJobCategory  String?
+  employmentTypes       EmploymentType[]    @default([])
+  preferredLocations    String[]            @default([])
+  preferredStates       String[]            @default([])
+  expectedSalaryMin     Int?
+  expectedSalaryMax     Int?
+  minimumAcceptableSalary Int?
+  availableStartDate    DateTime?
+  willingToRelocate     Boolean             @default(false)
+  preferredWorkingHours String?
+  preferredWorkArrangement WorkArrangement?
+  careerObjective       String?             @db.Text
+  additionalPreferences String?             @db.Text
+
+  // Section C–F summaries
+  highestQualification  String?
+  institutionName       String?
+  courseOfStudy         String?
+  yearOfGraduation      Int?
+  professionalQualifications String?        @db.Text
+  additionalTraining    String?             @db.Text
+  certificationsText    String?             @db.Text
+  skillsAcquired        String?             @db.Text
+  primarySkill          String?
+  additionalSkills      String[]            @default([])
+  yearsOfExperience     Int?
+  skillProficiency      SkillProficiency?
+  toolsSoftware         String?             @db.Text
+  professionalLicences  String?             @db.Text
+  languagesSpoken       String[]            @default([])
+  relevantTraining      String?             @db.Text
+  portfolioUrl          String?
+  professionalSummary   String?             @db.Text
+  cvUrl                 String?
+  cvAccessDefault       CvAccessLevel       @default(PRIVATE)
+  generatedCvHtml       String?             @db.Text
+
+  // Section G–I
+  backgroundConsent     Boolean             @default(false)
+  employmentHistoryVerified Boolean         @default(false)
+  guarantorStatus       VerificationStatus  @default(UNVERIFIED)
+  emergencyFullName     String?
+  emergencyRelationship String?
+  emergencyPhone        String?
+  emergencyAltPhone     String?
+
+  // Section J
+  declarationAccepted   Boolean             @default(false)
+  privacyAccepted       Boolean             @default(false)
+  termsAccepted         Boolean             @default(false)
+
+  displayName           String?
+  generalLocation       String?
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+
+  user             User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  educationDocs    JobSeekerEducationDoc[]
+  experiences      JobSeekerExperience[]
+  guarantor        JobSeekerGuarantor?
+  applications     JobApplication[]
+  contactRequests  ContactRequest[]
+  cvAccessGrants   CvAccessGrant[]
+  profileViews     ProfileView[]
+  assessmentInvites SkillAssessmentInvite[]
+
+  @@index([identityStatus])
+  @@index([primaryJobCategory])
+  @@index([profileHidden])
+}
+
+model JobSeekerEducationDoc {
+  id          String          @id @default(cuid())
+  profileId   String
+  label       String
+  url         String
+  status      DocReviewStatus @default(PENDING)
+  note        String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  profile JobSeekerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+}
+
+model JobSeekerExperience {
+  id                    String    @id @default(cuid())
+  profileId             String
+  jobTitle              String
+  employerName          String
+  companyLocation       String?
+  startDate             DateTime?
+  endDate               DateTime?
+  responsibilities      String?   @db.Text
+  achievements          String?   @db.Text
+  reasonForLeaving      String?
+  supervisorName        String?
+  supervisorContact     String?
+  permissionToContact   Boolean   @default(false)
+  verified              Boolean   @default(false)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  profile JobSeekerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+}
+
+model JobSeekerGuarantor {
+  id                String             @id @default(cuid())
+  profileId         String             @unique
+  fullName          String
+  phone             String
+  whatsapp          String?
+  email             String?
+  residentialAddress String?           @db.Text
+  occupation        String?
+  employerName      String?
+  relationship      String?
+  yearsKnown        Int?
+  idVerified        Boolean            @default(false)
+  consentToContact  Boolean            @default(false)
+  declarationAccepted Boolean          @default(false)
+  inviteToken       String?            @unique
+  inviteSentAt      DateTime?
+  confirmedAt       DateTime?
+  status            VerificationStatus @default(UNVERIFIED)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  profile JobSeekerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+}
+
+model EmployerProfile {
+  id                    String             @id @default(cuid())
+  userId                String             @unique
+  hcId                  String             @unique
+  kind                  EmployerKind
+  registrationStep      Int                @default(0)
+  verificationStatus    VerificationStatus @default(UNVERIFIED)
+  verificationNote      String?
+
+  companyName           String?
+  cacNumber             String?
+  businessAddress       String?            @db.Text
+  officialEmail         String?
+  phone                 String?
+  authorizedRepName     String?
+  authorizedRepIdUrl    String?
+
+  fullName              String?
+  generalLocation       String?
+  natureOfEmployment    String?
+
+  identityStatus        VerificationStatus @default(UNVERIFIED)
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vacancies EmploymentVacancy[]
+
+  @@index([verificationStatus])
+}
+
+model EmploymentVacancy {
+  id              String         @id @default(cuid())
+  employerId      String
+  employerUserId  String
+  title           String
+  category        String?
+  description     String         @db.Text
+  employmentTypes EmploymentType[] @default([])
+  location        String?
+  salaryMin       Int?
+  salaryMax       Int?
+  published       Boolean        @default(false)
+  pendingReview   Boolean        @default(true)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  employer     EmployerProfile @relation(fields: [employerId], references: [id], onDelete: Cascade)
+  employerUser User            @relation("VacancyEmployerUser", fields: [employerUserId], references: [id], onDelete: Cascade)
+  applications JobApplication[]
+
+  @@index([employerId])
+  @@index([published])
+}
+
+model JobApplication {
+  id              String   @id @default(cuid())
+  vacancyId       String
+  seekerProfileId String
+  seekerUserId    String
+  coverNote       String?  @db.Text
+  createdAt       DateTime @default(now())
+
+  vacancy       EmploymentVacancy @relation(fields: [vacancyId], references: [id], onDelete: Cascade)
+  seekerProfile JobSeekerProfile  @relation(fields: [seekerProfileId], references: [id], onDelete: Cascade)
+  seekerUser    User              @relation("ApplicationSeekerUser", fields: [seekerUserId], references: [id], onDelete: Cascade)
+
+  @@unique([vacancyId, seekerProfileId])
+  @@index([seekerUserId])
+}
+
+model ContactRequest {
+  id              String                @id @default(cuid())
+  employerUserId  String
+  seekerUserId    String
+  seekerProfileId String
+  message         String                @db.Text
+  jobOpportunity  String?
+  status          ContactRequestStatus  @default(PENDING)
+  createdAt       DateTime              @default(now())
+  respondedAt     DateTime?
+
+  employerUser  User             @relation("ContactRequestEmployer", fields: [employerUserId], references: [id], onDelete: Cascade)
+  seekerUser    User             @relation("ContactRequestSeeker", fields: [seekerUserId], references: [id], onDelete: Cascade)
+  seekerProfile JobSeekerProfile @relation(fields: [seekerProfileId], references: [id], onDelete: Cascade)
+
+  @@index([seekerUserId])
+  @@index([employerUserId])
+}
+
+model CvAccessGrant {
+  id              String        @id @default(cuid())
+  seekerProfileId String
+  employerUserId  String
+  level           CvAccessLevel
+  vacancyId       String?
+  revokedAt       DateTime?
+  createdAt       DateTime      @default(now())
+
+  seekerProfile JobSeekerProfile @relation(fields: [seekerProfileId], references: [id], onDelete: Cascade)
+  employerUser  User             @relation("CvGrantEmployer", fields: [employerUserId], references: [id], onDelete: Cascade)
+
+  @@index([seekerProfileId])
+  @@index([employerUserId])
+}
+
+model CvAccessLog {
+  id              String   @id @default(cuid())
+  seekerProfileId String
+  viewerUserId    String
+  viewerHcId      String?
+  action          String
+  createdAt       DateTime @default(now())
+
+  @@index([seekerProfileId])
+  @@index([viewerUserId])
+  @@index([createdAt])
+}
+
+model ProfileView {
+  id              String   @id @default(cuid())
+  seekerProfileId String
+  viewerUserId    String
+  createdAt       DateTime @default(now())
+
+  seekerProfile JobSeekerProfile @relation(fields: [seekerProfileId], references: [id], onDelete: Cascade)
+  viewerUser    User             @relation("ProfileViewer", fields: [viewerUserId], references: [id], onDelete: Cascade)
+
+  @@index([seekerProfileId])
+  @@index([viewerUserId])
+}
+
+model SkillAssessmentInvite {
+  id              String   @id @default(cuid())
+  seekerProfileId String
+  category        String
+  status          String   @default("INVITED")
+  createdAt       DateTime @default(now())
+
+  seekerProfile JobSeekerProfile @relation(fields: [seekerProfileId], references: [id], onDelete: Cascade)
+
+  @@index([seekerProfileId])
+}
+
+model FlaggedAccount {
+  id        String   @id @default(cuid())
+  userId    String
+  reason    String
+  meta      Json?
+  resolved  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation("FlaggedUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([resolved])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  action    String
+  entity    String?
+  entityId  String?
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([actorId])
+  @@index([createdAt])
+}
+
+model PrivacyRequest {
+  id        String   @id @default(cuid())
+  userId    String
+  kind      String
+  status    String   @default("OPEN")
+  note      String?
+  createdAt DateTime @default(now())
+  closedAt  DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model EquipmentOwnerProfile {
+  id                 String             @id @default(cuid())
+  userId             String             @unique
+  hcId               String             @unique
+  kind               EmployerKind       @default(INDIVIDUAL)
+  registrationStep   Int                @default(0)
+  identityStatus     VerificationStatus @default(UNVERIFIED)
+
+  fullName           String?
+  phone              String?
+  whatsapp           String?
+  email              String?
+  dateOfBirth        DateTime?
+  stateOfResidence   String?
+  city               String?
+  residentialAddress String?            @db.Text
+  profilePhotoUrl    String?
+  idDocumentUrl      String?
+
+  businessName       String?
+  cacNumber          String?
+  businessAddress    String?            @db.Text
+  businessCategory   String?
+  authorizedRepName  String?
+  website            String?
+
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listings EquipmentListing[]
+
+  @@index([identityStatus])
+}
+
+model RentalCustomerProfile {
+  id               String             @id @default(cuid())
+  userId           String             @unique
+  hcId             String             @unique
+  fullName         String?
+  phone            String?
+  whatsapp         String?
+  email            String?
+  dateOfBirth      DateTime?
+  generalLocation  String?
+  identityStatus   VerificationStatus @default(UNVERIFIED)
+  businessName     String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  user     User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookings EquipmentRentalBooking[]
+}
+
+model EquipmentListing {
+  id                    String                  @id @default(cuid())
+  ownerProfileId        String
+  hcId                  String                  @unique
+  name                  String
+  category              String
+  subcategory           String?
+  brand                 String?
+  model                 String?
+  yearOfManufacture     Int?
+  serialNumberPrivate   String?
+  description           String                  @db.Text
+  quantity              Int                     @default(1)
+  condition             EquipmentCondition      @default(GOOD)
+  accessories           String?                 @db.Text
+  replacementValue      Int?
+  photos                String[]                @default([])
+  demoVideoUrl          String?
+
+  hourlyPrice           Int?
+  dailyPrice            Int?
+  weeklyPrice           Int?
+  monthlyPrice          Int?
+  minDurationHours      Int?
+  maxDurationHours      Int?
+  securityDeposit       Int                     @default(0)
+  deliveryCharge        Int                     @default(0)
+  pickupCharge          Int                     @default(0)
+  operatorCharge        Int                     @default(0)
+  lateReturnCharge      Int                     @default(0)
+  damagePolicy          String?                 @db.Text
+  cancellationPolicy    String?                 @db.Text
+
+  state                 String?
+  city                  String?
+  area                  String?
+  generalPickupLocation String?
+  deliveryAvailable     Boolean                 @default(false)
+  maxDeliveryKm         Int?
+  pickupAvailable       Boolean                 @default(true)
+  preciseAddressPrivate String?                 @db.Text
+
+  ownershipDeclaration  Boolean                 @default(false)
+  ownershipEvidenceUrls String[]                @default([])
+  ownershipReviewed     Boolean                 @default(false)
+  equipmentInspected    Boolean                 @default(false)
+  functionalityTested   Boolean                 @default(false)
+
+  rentalTerms           String?                 @db.Text
+  status                EquipmentListingStatus  @default(DRAFT)
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+
+  owner       EquipmentOwnerProfile     @relation(fields: [ownerProfileId], references: [id], onDelete: Cascade)
+  availability EquipmentAvailability[]
+  bookings    EquipmentRentalBooking[]
+
+  @@index([ownerProfileId])
+  @@index([status])
+  @@index([category])
+}
+
+model EquipmentAvailability {
+  id         String   @id @default(cuid())
+  listingId  String
+  date       DateTime @db.Date
+  kind       String   @default("AVAILABLE")
+  note       String?
+
+  listing EquipmentListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@unique([listingId, date])
+  @@index([listingId])
+}
+
+model EquipmentRentalBooking {
+  id                String               @id @default(cuid())
+  listingId         String
+  customerProfileId String
+  customerUserId    String
+  quantity          Int                  @default(1)
+  startDate         DateTime
+  endDate           DateTime
+  pickupOrDelivery  String               @default("PICKUP")
+  preferredLocation String?
+  budget            Int?
+  operatorRequired  Boolean              @default(false)
+  intendedUsage     String?              @db.Text
+  specialRequirements String?            @db.Text
+  estimatedTotal    Int                  @default(0)
+  depositAmount     Int                  @default(0)
+  paymentRef        String?
+  paymentStatus     String               @default("UNPAID")
+  status            RentalBookingStatus  @default(REQUESTED)
+  handoverJson      Json?
+  returnJson        Json?
+  customerHandoverAck Boolean            @default(false)
+  ownerHandoverAck  Boolean              @default(false)
+  extensionRequested Boolean             @default(false)
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+
+  listing         EquipmentListing      @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  customerProfile RentalCustomerProfile @relation(fields: [customerProfileId], references: [id], onDelete: Cascade)
+  customerUser    User                  @relation("RentalCustomerUser", fields: [customerUserId], references: [id], onDelete: Cascade)
+  reminders       RentalReminder[]
+  disputes        RentalDispute[]
+
+  @@index([listingId])
+  @@index([customerUserId])
+  @@index([status])
+}
+
+model RentalReminder {
+  id        String   @id @default(cuid())
+  bookingId String
+  kind      String
+  sentAt    DateTime @default(now())
+
+  booking EquipmentRentalBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+}
+
+model RentalDispute {
+  id          String              @id @default(cuid())
+  bookingId   String
+  openedById  String
+  type        RentalDisputeType
+  status      RentalDisputeStatus @default(OPEN)
+  description String              @db.Text
+  resolution  String?             @db.Text
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  booking  EquipmentRentalBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  openedBy User                   @relation("DisputeOpener", fields: [openedById], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+  @@index([status])
+}
+
+model IdentityProviderResult {
+  id           String   @id @default(cuid())
+  userId       String
+  provider     String
+  referenceId  String
+  status       String
+  rawRedacted  Json?
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([referenceId])
+}
+
+model AdminNotification {
+  id         String    @id @default(cuid())
+  type       String
+  title      String
+  body       String?
+  href       String?
+  entityType String?
+  entityId   String?
+  severity   String    @default("INFO")
+  readAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([readAt, createdAt])
+  @@index([type])
+  @@index([entityType, entityId])
 }

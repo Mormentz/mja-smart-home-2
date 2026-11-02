@@ -20,6 +20,10 @@ export async function createOrUpdateMoveIn(data: z.infer<typeof moveInSchema>) {
   if (!session?.user?.id) return { error: "Unauthorized" };
   if (session.user.role !== "USER") return { error: "Only users can request move-in support" };
 
+  const { kycGateError, requireUserTier1 } = await import("@/lib/auth/kyc-gate");
+  const kyc = await requireUserTier1(session.user.id);
+  if (!kyc.ok) return kycGateError(kyc);
+
   const parsed = moveInSchema.safeParse(data);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid request" };
 

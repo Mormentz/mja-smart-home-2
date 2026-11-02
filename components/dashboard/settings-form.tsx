@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { submitKyc, updateProfile } from "@/lib/actions/auth";
+import Link from "next/link";
+import { updateProfile } from "@/lib/actions/auth";
 import { roleLabel } from "@/lib/auth/role-labels";
 import type { Role } from "@prisma/client";
 import { Button } from "@/components/ui/button";
@@ -29,7 +30,6 @@ export function SettingsForm({
   const [displayName, setDisplayName] = useState(name ?? "");
   const [phoneValue, setPhoneValue] = useState(phone ?? "");
   const [loading, setLoading] = useState(false);
-  const [kycLoading, setKycLoading] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -41,19 +41,6 @@ export function SettingsForm({
       return;
     }
     toast.success("Profile updated");
-  }
-
-  async function onSubmitKyc() {
-    setKycLoading(true);
-    const result = await submitKyc({ phone: phoneValue });
-    setKycLoading(false);
-    if (result.error) {
-      toast.error(result.error);
-      return;
-    }
-    toast.success(
-      role === "USER" ? "Basic KYC completed" : "KYC submitted for review",
-    );
   }
 
   return (
@@ -99,35 +86,22 @@ export function SettingsForm({
           </p>
         )}
         <p className="text-xs text-muted-foreground">
-          {role === "USER" && "Basic KYC: confirm your phone to unlock smoother escrow."}
-          {role === "AGENT" && "Standard KYC required before publishing listings. Submit your phone for admin review."}
-          {role === "ARTISAN" && "Enhanced KYC required before appearing as available publicly. Submit your phone for admin review."}
+          {role === "USER" &&
+            "Tier 1 document KYC is required before booking, messaging, escrow, jobs, and rentals. Tier 2/3 are optional."}
+          {role === "AGENT" &&
+            "Tier 3 (Enhanced) KYC is required before publishing listings and releasing escrow to your wallet."}
+          {role === "ARTISAN" &&
+            "Tier 3 (Enhanced) KYC is required before going available and accepting paid jobs."}
           {role === "ADMIN" && "Admin accounts are fully verified."}
         </p>
-        {role !== "ADMIN" &&
-          kycStatus !== "VERIFIED" &&
-          kycStatus !== "PENDING" && (
-          <Button
-            type="button"
-            size="sm"
-            onClick={onSubmitKyc}
-            disabled={kycLoading || phoneValue.trim().length < 7}
-          >
-            {kycLoading
-              ? "Submitting…"
-              : role === "USER"
-                ? "Complete basic KYC"
-                : kycStatus === "REJECTED"
-                  ? "Resubmit KYC for review"
-                  : "Submit KYC for review"}
+        {role !== "ADMIN" && (
+          <Button type="button" size="sm" variant="secondary" asChild>
+            <Link href="/dashboard/kyc">Open KYC workspace</Link>
           </Button>
         )}
         {role !== "ADMIN" && kycStatus === "PENDING" && (
-          <p className="text-xs text-amber-800 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
-            KYC is pending admin review. You can&apos;t submit again until it&apos;s approved or
-            rejected.
-            {role === "ARTISAN" &&
-              " After Tier 1 is verified, optional Tier 2 / 3 upgrades are available on Services."}
+          <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            KYC is pending admin review. You can&apos;t resubmit until it&apos;s approved or rejected.
           </p>
         )}
       </div>

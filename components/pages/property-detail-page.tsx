@@ -6,6 +6,7 @@ import { ArrowLeft, Bath, BedDouble, MapPin, Ruler, ShieldCheck, Check, ShieldAl
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { PropertyActions } from "@/components/property-actions";
+import type { PropertyEngagement } from "@/lib/actions/property-engagement";
 import type { Property } from "@/lib/properties";
 import { formatMoney } from "@/lib/currency";
 import { imageSrc } from "@/lib/utils";
@@ -14,10 +15,14 @@ export function PropertyDetailPage({
   property: p,
   similar,
   saved = false,
+  engagement,
+  escrowJustSecured = false,
 }: {
   property: Property;
   similar: Property[];
   saved?: boolean;
+  engagement?: PropertyEngagement;
+  escrowJustSecured?: boolean;
 }) {
   const verified = p.verificationStatus === "VERIFIED";
   const n = p.neighborhood;
@@ -112,7 +117,7 @@ export function PropertyDetailPage({
         </section>
       )}
 
-      <section className="container-page mt-14 grid lg:grid-cols-3 gap-10">
+      <section className="container-page mt-6 grid lg:grid-cols-3 gap-8 lg:gap-10">
         <div className="lg:col-span-2">
           <div className="grid grid-cols-3 gap-3">
             <Fact icon={<BedDouble size={18} />} label="Bedrooms" value={p.beds.toString()} />
@@ -148,23 +153,17 @@ export function PropertyDetailPage({
         </div>
 
         <aside className="lg:sticky lg:top-8 h-max rounded-3xl border border-border p-6 shadow-soft bg-card">
-          <div className={`flex items-center gap-2 ${verified ? "text-success" : "text-muted-foreground"}`}>
-            {verified ? <ShieldCheck size={18} /> : <ShieldAlert size={18} />}
-            <span className="text-sm font-semibold">
-              {verified ? "Verified listing" : "Verification pending / unverified"}
-            </span>
-          </div>
-          <p className="mt-4 font-display text-3xl font-semibold text-primary">
-            {formatMoney(p.price, { currency: p.currency })}
-            {p.type === "For Rent" && <span className="text-base text-muted-foreground font-normal"> /mo</span>}
-          </p>
           <PropertyActions
             propertyId={p.id}
             ownerId={p.ownerId}
             propertyTitle={p.title}
             propertyType={p.type}
             monthlyPrice={p.price}
+            currency={p.currency}
+            verified={verified}
             initiallySaved={saved}
+            engagement={engagement}
+            escrowJustSecured={escrowJustSecured}
           />
         </aside>
       </section>

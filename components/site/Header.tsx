@@ -17,11 +17,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { HomeConnectLogo } from "@/components/brand/homeconnect-logo";
 
 const nav = [
   { href: "/", label: "Home", exact: true },
   { href: "/properties", label: "Properties" },
-  { href: "/artisans", label: "Artisans" },
+  { href: "/services", label: "Services" },
+  { href: "/jobs", label: "Jobs" },
+  { href: "/rentals", label: "Rentals" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
 ] as const;
@@ -31,6 +34,7 @@ export function Header({ variant = "dark" }: { variant?: "dark" | "light" }) {
   const { data: session, status } = useSession();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -69,12 +73,7 @@ export function Header({ variant = "dark" }: { variant?: "dark" | "light" }) {
             scrolled && "backdrop-blur-xl bg-ink/30",
           )}
         >
-          <Link href="/" className="flex items-center gap-2 group">
-            <span className="grid place-items-center w-9 h-9 rounded-full bg-success/90">
-              <span className="w-3 h-3 rounded-sm bg-ink rotate-45" />
-            </span>
-            <span className="font-display text-lg font-bold tracking-tight">HomeConnect</span>
-          </Link>
+          <HomeConnectLogo onDark={isDark} height={28} priority className="max-w-[160px] sm:max-w-none" />
 
           <nav className="hidden md:flex items-center gap-1">
             {nav.map((n) => (
@@ -119,8 +118,16 @@ export function Header({ variant = "dark" }: { variant?: "dark" | "light" }) {
                       <User className="mr-2 h-4 w-4" /> Dashboard
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/" })}>
-                    <LogOut className="mr-2 h-4 w-4" /> Sign out
+                  <DropdownMenuItem
+                    disabled={signingOut}
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      if (signingOut) return;
+                      setSigningOut(true);
+                      void signOut({ callbackUrl: "/" });
+                    }}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" /> {signingOut ? "Signing out…" : "Sign out"}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -176,10 +183,15 @@ export function Header({ variant = "dark" }: { variant?: "dark" | "light" }) {
                       Dashboard
                     </Link>
                     <button
-                      onClick={() => signOut({ callbackUrl: "/" })}
-                      className="flex-1 py-2.5 rounded-full bg-success text-ink font-semibold"
+                      disabled={signingOut}
+                      onClick={() => {
+                        if (signingOut) return;
+                        setSigningOut(true);
+                        void signOut({ callbackUrl: "/" });
+                      }}
+                      className="flex-1 py-2.5 rounded-full bg-success text-ink font-semibold disabled:opacity-60"
                     >
-                      Sign out
+                      {signingOut ? "Signing out…" : "Sign out"}
                     </button>
                   </>
                 ) : (

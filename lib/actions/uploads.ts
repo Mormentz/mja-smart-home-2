@@ -3,6 +3,7 @@
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import { requireRole } from "@/lib/auth/roles";
+import { getAdminSessionOrNull } from "@/lib/auth/admin";
 
 const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp"]);
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -15,7 +16,10 @@ function extFor(type: string) {
 }
 
 export async function uploadPropertyImages(formData: FormData) {
-  await requireRole(["AGENT", "ADMIN"]);
+  const admin = await getAdminSessionOrNull();
+  if (!admin) {
+    await requireRole(["AGENT"]);
+  }
 
   const propertyId = String(formData.get("propertyId") ?? "").trim();
   if (!propertyId || !/^[a-z0-9-]+$/.test(propertyId)) {

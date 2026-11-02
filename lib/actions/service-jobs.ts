@@ -21,6 +21,15 @@ export async function createServiceJob(data: z.infer<typeof createJobSchema>) {
     return { error: "Only users and agents can book artisans" };
   }
 
+  const { kycGateError, requireProTier3, requireUserTier1 } = await import("@/lib/auth/kyc-gate");
+  if (session.user.role === "USER") {
+    const kyc = await requireUserTier1(session.user.id);
+    if (!kyc.ok) return kycGateError(kyc);
+  } else {
+    const kyc = await requireProTier3(session.user.id);
+    if (!kyc.ok) return kycGateError(kyc);
+  }
+
   const parsed = createJobSchema.safeParse(data);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid job" };
 
@@ -86,6 +95,12 @@ export async function updateServiceJobStatus(
   const isCustomer = job.customerId === session.user.id;
   if (!isArtisan && !(isCustomer && status === "CANCELLED")) {
     return { error: "Not allowed" };
+  }
+
+  if (isArtisan && status !== "CANCELLED") {
+    const { kycGateError, requireProTier3 } = await import("@/lib/auth/kyc-gate");
+    const kyc = await requireProTier3(session.user.id);
+    if (!kyc.ok) return kycGateError(kyc);
   }
 
   await prisma.serviceJob.update({
@@ -167,10 +182,12 @@ export async function listArtisans(opts?: {
         role: "ARTISAN",
         active: true,
         kycStatus: "VERIFIED",
+        kycLevel: "ENHANCED",
         ...(opts?.stateCode ? { stateCode: opts.stateCode } : {}),
         ...(opts?.areaName ? { areaName: opts.areaName } : {}),
         serviceProfile: {
           is: {
+            verified: true,
             ...(opts?.availableOnly ? { available: true } : {}),
           },
         },

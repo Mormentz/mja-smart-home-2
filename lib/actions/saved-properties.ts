@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
+import { kycGateError, requireUserTier1 } from "@/lib/auth/kyc-gate";
 import { prisma } from "@/lib/prisma";
 
 export async function toggleSavedProperty(propertyId: string) {
@@ -10,6 +11,9 @@ export async function toggleSavedProperty(propertyId: string) {
   if (session.user.role !== "USER") {
     return { error: "Only users can save homes" };
   }
+
+  const kyc = await requireUserTier1(session.user.id);
+  if (!kyc.ok) return kycGateError(kyc);
 
   const existing = await prisma.savedProperty.findUnique({
     where: {

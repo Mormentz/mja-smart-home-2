@@ -42,8 +42,8 @@ export function KycTier1Form({ defaults, kycStatus, onDone }: Props) {
           )}
           {verified && (
             <>
-              Tier 1 KYC is <strong>verified</strong>. You can list services and go available.
-              Submit Tier 2 / 3 upgrades from your Services page if you want a higher trust badge.
+              Tier 1 KYC is <strong>verified</strong>. Continue with Tier 2 / 3 — Enhanced KYC is
+              required before artisans can go available in the directory.
             </>
           )}
         </p>

@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { requireRole } from "@/lib/auth/roles";
+import { requireAdminSession } from "@/lib/auth/admin";
+import { writeAdminAudit } from "@/lib/admin/audit";
 import { prisma } from "@/lib/prisma";
 
 function slugify(name: string) {
@@ -21,12 +22,15 @@ export async function listActiveAmenities() {
 }
 
 export async function listAllAmenities() {
-  await requireRole(["ADMIN"]);
-  return prisma.amenity.findMany({ orderBy: { name: "asc" } });
+  await requireAdminSession();
+  return prisma.amenity.findMany({
+    orderBy: { name: "asc" },
+    include: { _count: { select: { properties: true } } },
+  });
 }
 
 export async function createAmenity(name: string) {
-  await requireRole(["ADMIN"]);
+  await requireAdminSession();
   const trimmed = name.trim();
   if (trimmed.length < 2) return { error: "Name too short" };
   const slug = slugify(trimmed);
@@ -37,7 +41,7 @@ export async function createAmenity(name: string) {
   } catch {
     return { error: "Amenity already exists" };
   }
-  revalidatePath("/dashboard/admin/amenities");
+  revalidatePath("/admin/amenities");
   revalidatePath("/dashboard/listings");
   return { success: true };
 }
@@ -46,7 +50,7 @@ export async function updateAmenity(
   id: string,
   data: { name?: string; active?: boolean },
 ) {
-  await requireRole(["ADMIN"]);
+  await requireAdminSession();
   const patch: { name?: string; slug?: string; active?: boolean } = {};
   if (typeof data.active === "boolean") patch.active = data.active;
   if (data.name) {
@@ -60,10 +64,46 @@ export async function updateAmenity(
   } catch {
     return { error: "Could not update amenity" };
   }
-  revalidatePath("/dashboard/admin/amenities");
+  revalidatePath("/admin/amenities");
   revalidatePath("/dashboard/listings");
   revalidatePath("/properties");
   return { success: true };
+}
+
+export async function deleteAmenity(id: string) {
+  const session = await requireAdminSession();
+  const amenity = await prisma.amenity.findUnique({
+    where: { id },
+    include: { _count: { select: { properties: true } } },
+  });
+  if (!amenity) return { error: "Amenity not found" };
+
+  // Keep the denormalised Property.amenities name list in sync.
+  const links = await prisma.propertyAmenity.findMany({
+    where: { amenityId: id },
+    select: { property: { select: { id: true, amenities: true } } },
+  });
+  await prisma.$transaction([
+    ...links.map(({ property }) =>
+      prisma.property.update({
+        where: { id: property.id },
+        data: { amenities: property.amenities.filter((n) => n !== amenity.name) },
+      }),
+    ),
+    prisma.amenity.delete({ where: { id } }),
+  ]);
+
+  await writeAdminAudit({
+    actorId: session.user.id,
+    action: "AMENITY_DELETE",
+    entity: "Amenity",
+    entityId: id,
+    meta: { name: amenity.name, propertiesAffected: amenity._count.properties },
+  });
+  revalidatePath("/admin/amenities");
+  revalidatePath("/dashboard/listings");
+  revalidatePath("/properties");
+  return { success: true as const, propertiesAffected: amenity._count.properties };
 }
 
 export async function setPropertyAmenities(propertyId: string, amenityIds: string[]) {

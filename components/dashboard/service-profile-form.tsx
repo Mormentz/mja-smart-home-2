@@ -56,7 +56,7 @@ export function ServiceProfileForm({
   const [serviceArea, setServiceArea] = useState(profile?.serviceArea ?? "");
   const [selected, setSelected] = useState<TradeSelection[]>(selectedTrades);
   const [loading, setLoading] = useState(false);
-  const tier1Ok = kycStatus === "VERIFIED";
+  const tier3Ok = kycStatus === "VERIFIED" && kycLevel === "ENHANCED";
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -70,7 +70,7 @@ export function ServiceProfileForm({
     const result = await updateServiceProfile({
       trade,
       bio,
-      available: tier1Ok ? available : false,
+      available: tier3Ok ? available : false,
       hourlyRate,
       serviceArea,
     });
@@ -99,10 +99,16 @@ export function ServiceProfileForm({
         </div>
       )}
 
-      {!tier1Ok && (
+      {!tier3Ok && (
         <div className="rounded-xl border border-border bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
-          Tier 1 KYC must be verified before you can go available in the hub. Status:{" "}
-          <strong>{kycStatus}</strong>
+          Tier 3 (Enhanced) KYC must be verified before you can go available in the hub. Status:{" "}
+          <strong>
+            {kycLevel} / {kycStatus}
+          </strong>
+          .{" "}
+          <Link href="/dashboard/onboarding/artisan" className="font-semibold underline">
+            Complete KYC
+          </Link>
         </div>
       )}
 
@@ -178,11 +184,11 @@ export function ServiceProfileForm({
         <label className="flex items-center gap-2 text-sm">
           <input
             type="checkbox"
-            checked={available && tier1Ok}
-            disabled={!tier1Ok}
+            checked={available && tier3Ok}
+            disabled={!tier3Ok}
             onChange={(e) => setAvailable(e.target.checked)}
           />
-          Available for new jobs {!tier1Ok && "(locked until Tier 1 verified)"}
+          Available for new jobs {!tier3Ok && "(locked until Tier 3 Enhanced verified)"}
         </label>
         <Button type="submit" disabled={loading}>
           {loading ? "Saving..." : "Save profile"}

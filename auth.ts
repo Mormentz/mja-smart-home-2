@@ -9,6 +9,15 @@ import { prisma } from "@/lib/prisma";
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   adapter: PrismaAdapter(prisma),
+  // Expected credential failures (wrong password / unverified / admin) must not dump stacks.
+  logger: {
+    error(error) {
+      const name = typeof error === "object" && error && "name" in error ? String(error.name) : "";
+      const type = typeof error === "object" && error && "type" in error ? String(error.type) : "";
+      if (name === "CredentialsSignin" || type === "CredentialsSignin") return;
+      console.error("[auth]", error);
+    },
+  },
   providers: [
     Credentials({
       name: "credentials",
@@ -34,12 +43,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
+        // Return null (no throw) so Auth.js does not log CredentialsSignin stacks.
+        // Typed reasons are handled via preflightCredentialsLogin on the login form.
+        if (user.role === "ADMIN") {
+          return null;
+        }
+
+        if (!user.emailVerified) {
+          return null;
+        }
+
         return {
           id: user.id,
           email: user.email,
           name: user.name,
           image: user.image,
           role: user.role,
+          emailVerified: user.emailVerified,
         };
       },
     }),

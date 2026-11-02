@@ -13,6 +13,7 @@ import {
   type TradeSelection,
 } from "@/components/artisans/onboarding/trade-picker";
 import { KycTier1Form } from "@/components/artisans/onboarding/kyc-tier1-form";
+import { KycUpgradePanel } from "@/components/artisans/kyc-upgrade-panel";
 import { saveArtisanLocation, saveArtisanTrades } from "@/lib/actions/artisan-onboarding";
 import type { SkillProficiencyLevel } from "@/lib/services/skill-proficiency";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,7 @@ type UserState = {
   lng: number | null;
   onboardingStep: number;
   kycStatus: string;
+  kycLevel: string;
   artisanServices: { subcategoryId: string; proficiency: string }[];
 };
 
@@ -40,6 +42,7 @@ const STEPS = [
   { id: 2, label: "Profile & location" },
   { id: 3, label: "Trades" },
   { id: 4, label: "Tier 1 KYC" },
+  { id: 5, label: "Tier 2–3 KYC" },
 ] as const;
 
 export function ArtisanOnboardingWizard({
@@ -53,11 +56,12 @@ export function ArtisanOnboardingWizard({
   const emailVerified = Boolean(user.emailVerified);
   const initialStep = useMemo(() => {
     if (!emailVerified) return 2;
+    if (user.kycStatus === "VERIFIED" && user.kycLevel !== "ENHANCED") return 5;
     if (user.onboardingStep >= 4 || user.kycStatus === "PENDING" || user.kycStatus === "VERIFIED")
       return 4;
     if (user.onboardingStep >= 3) return 3;
     return 2;
-  }, [emailVerified, user.onboardingStep, user.kycStatus]);
+  }, [emailVerified, user.onboardingStep, user.kycStatus, user.kycLevel]);
 
   const [step, setStep] = useState<number>(initialStep);
   const [name, setName] = useState(user.name ?? "");
@@ -76,6 +80,8 @@ export function ArtisanOnboardingWizard({
     })),
   );
   const [saving, setSaving] = useState(false);
+
+  const enhanced = user.kycStatus === "VERIFIED" && user.kycLevel === "ENHANCED";
 
   async function saveLocation() {
     if (!emailVerified) {
@@ -179,7 +185,7 @@ export function ArtisanOnboardingWizard({
               areaName: location.areaName || user.areaName || "",
             }}
             onDone={() => {
-              router.push("/dashboard/services");
+              setStep(5);
               router.refresh();
             }}
           />
@@ -188,17 +194,35 @@ export function ArtisanOnboardingWizard({
               Back
             </Button>
           )}
-          {(user.kycStatus === "PENDING" || user.kycStatus === "VERIFIED") && (
+          {user.kycStatus === "VERIFIED" && (
+            <Button type="button" onClick={() => setStep(5)}>
+              Continue to Tier 2 / 3
+            </Button>
+          )}
+        </div>
+      )}
+
+      {step === 5 && (
+        <div className="space-y-4 rounded-2xl border border-border/70 bg-card p-5">
+          <p className="text-sm text-muted-foreground">
+            Tier 3 (Enhanced) KYC is required before you can go available in the directory.
+          </p>
+          <KycUpgradePanel kycLevel={user.kycLevel} kycStatus={user.kycStatus} />
+          <div className="flex gap-2">
+            <Button type="button" variant="secondary" onClick={() => setStep(4)}>
+              Back
+            </Button>
             <Button
               type="button"
+              disabled={!enhanced}
               onClick={() => {
                 router.push("/dashboard/services");
                 router.refresh();
               }}
             >
-              Go to services
+              {enhanced ? "Go to services" : "Waiting for Enhanced verification"}
             </Button>
-          )}
+          </div>
         </div>
       )}
     </div>

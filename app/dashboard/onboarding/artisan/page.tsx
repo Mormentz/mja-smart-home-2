@@ -17,7 +17,7 @@ export default async function ArtisanOnboardingPage() {
   return (
     <DashboardSection
       title="Artisan onboarding"
-      description="Finish location, trades, and Tier 1 KYC to appear in Artisans Hub."
+      description="Finish location, trades, and Tier 1–3 KYC to go available in Artisans Hub."
     >
       <ArtisanOnboardingWizard
         user={{
@@ -33,6 +33,7 @@ export default async function ArtisanOnboardingPage() {
           lng: user.lng,
           onboardingStep: user.onboardingStep,
           kycStatus: user.kycStatus,
+          kycLevel: user.kycLevel,
           artisanServices: user.artisanServices.map((s) => ({
             subcategoryId: s.subcategoryId,
             proficiency: s.proficiency,

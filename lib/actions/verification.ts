@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { VerificationStatus } from "@prisma/client";
 import { auth } from "@/auth";
+import { getAdminSessionOrNull } from "@/lib/auth/admin";
 import { prisma } from "@/lib/prisma";
 
 export async function requestPropertyVerification(propertyId: string) {
@@ -11,6 +12,10 @@ export async function requestPropertyVerification(propertyId: string) {
   if (session.user.role !== "AGENT") {
     return { error: "Only agents can request verification" };
   }
+
+  const { kycGateError, requireProTier3 } = await import("@/lib/auth/kyc-gate");
+  const kyc = await requireProTier3(session.user.id);
+  if (!kyc.ok) return kycGateError(kyc);
 
   const property = await prisma.property.findUnique({ where: { id: propertyId } });
   if (!property || property.ownerId !== session.user.id) {
@@ -22,8 +27,19 @@ export async function requestPropertyVerification(propertyId: string) {
     data: { verificationStatus: VerificationStatus.PENDING },
   });
 
+  const { emitAdminNotification } = await import("@/lib/actions/admin-notifications");
+  await emitAdminNotification({
+    type: "PROPERTY_PENDING",
+    title: "Property verification requested",
+    body: property.title,
+    href: `/admin/properties/${propertyId}`,
+    entityType: "property",
+    entityId: propertyId,
+    severity: "ACTION",
+  });
+
   revalidatePath("/dashboard/listings");
-  revalidatePath("/dashboard/admin");
+  revalidatePath("/admin");
   revalidatePath(`/properties/${propertyId}`);
   return { success: true };
 }
@@ -44,8 +60,19 @@ export async function requestArtisanVerification() {
     },
   });
 
+  const { emitAdminNotification } = await import("@/lib/actions/admin-notifications");
+  await emitAdminNotification({
+    type: "ARTISAN_PENDING",
+    title: "Artisan verification requested",
+    body: session.user.email ?? session.user.id,
+    href: `/admin/artisans/${session.user.id}`,
+    entityType: "artisan",
+    entityId: session.user.id,
+    severity: "ACTION",
+  });
+
   revalidatePath("/dashboard/services");
-  revalidatePath("/dashboard/admin");
+  revalidatePath("/admin");
   return { success: true };
 }
 
@@ -53,8 +80,8 @@ export async function decidePropertyVerification(
   propertyId: string,
   decision: "VERIFIED" | "REJECTED",
 ) {
-  const session = await auth();
-  if (!session?.user?.id || session.user.role !== "ADMIN") {
+  const session = await getAdminSessionOrNull();
+  if (!session) {
     return { error: "Admin only" };
   }
 
@@ -66,7 +93,7 @@ export async function decidePropertyVerification(
     },
   });
 
-  revalidatePath("/dashboard/admin");
+  revalidatePath("/admin");
   revalidatePath("/properties");
   revalidatePath(`/properties/${propertyId}`);
   return { success: true };
@@ -76,8 +103,8 @@ export async function decideArtisanVerification(
   userId: string,
   decision: "VERIFIED" | "REJECTED",
 ) {
-  const session = await auth();
-  if (!session?.user?.id || session.user.role !== "ADMIN") {
+  const session = await getAdminSessionOrNull();
+  if (!session) {
     return { error: "Admin only" };
   }
 
@@ -89,14 +116,14 @@ export async function decideArtisanVerification(
     },
   });
 
-  revalidatePath("/dashboard/admin");
+  revalidatePath("/admin");
   revalidatePath("/artisans");
   return { success: true };
 }
 
 export async function getPendingVerifications() {
-  const session = await auth();
-  if (!session?.user?.id || session.user.role !== "ADMIN") {
+  const session = await getAdminSessionOrNull();
+  if (!session) {
     return { properties: [], artisans: [] };
   }
 

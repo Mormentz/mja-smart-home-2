@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { Role } from "@prisma/client";
 import {
   ChevronLeft,
@@ -117,6 +118,7 @@ export function ConversationInbox({
   currentUserId: string;
   role: Role;
 }) {
+  const router = useRouter();
   const [threads, setThreads] = useState<Conversation[]>(conversations);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [mobileChatOpen, setMobileChatOpen] = useState(false);
@@ -292,11 +294,14 @@ export function ConversationInbox({
       attachments: pendingAttachments,
     });
     setLoading(false);
-    if (result.error) {
+    if ("error" in result && result.error) {
       toast.error(result.error);
+      if ("upgradeHref" in result && result.upgradeHref) {
+        router.push(String(result.upgradeHref));
+      }
       return;
     }
-    if (result.message) {
+    if ("message" in result && result.message) {
       setThreads((prev) =>
         mergeMessageIntoThreads(prev, result.message as ThreadMessage, currentUserId),
       );
@@ -316,11 +321,14 @@ export function ConversationInbox({
       attachments: [{ kind: "PROPERTY", propertyId: property.id }],
     });
     setLoading(false);
-    if (result.error) {
+    if ("error" in result && result.error) {
       toast.error(result.error);
+      if ("upgradeHref" in result && result.upgradeHref) {
+        router.push(String(result.upgradeHref));
+      }
       return;
     }
-    if (result.message) {
+    if ("message" in result && result.message) {
       setPropertyCache((prev) => ({ ...prev, [property.id]: property }));
       setThreads((prev) =>
         mergeMessageIntoThreads(prev, result.message as ThreadMessage, currentUserId),
@@ -330,8 +338,11 @@ export function ConversationInbox({
 
   if (threads.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-border/70 bg-card p-6 text-center text-sm text-muted-foreground">
-        No messages yet.
+      <div className="flex h-full min-h-[280px] flex-col items-center justify-center rounded-2xl border border-dashed border-border/70 bg-card px-6 py-12 text-center shadow-sm">
+        <p className="font-display text-lg font-semibold">No conversations yet</p>
+        <p className="mt-2 max-w-sm text-sm text-muted-foreground">
+          Message agents from a property page, or reply when someone contacts you about a listing or job.
+        </p>
       </div>
     );
   }
@@ -343,8 +354,8 @@ export function ConversationInbox({
         mobileChatOpen ? "hidden lg:flex" : "flex",
       )}
     >
-      <div className="shrink-0 border-b border-border px-3 py-2.5 lg:hidden">
-        <p className="text-sm font-semibold">Messages</p>
+      <div className="shrink-0 border-b border-border/60 px-4 py-3 lg:hidden">
+        <p className="font-display text-sm font-semibold">Messages</p>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
         {threads.map((c) => {
@@ -355,20 +366,29 @@ export function ConversationInbox({
               type="button"
               onClick={() => openConversation(c.counterpartId)}
               className={cn(
-                "w-full min-w-0 border-b border-border px-3 py-2.5 text-left transition",
-                activeId === c.counterpartId ? "bg-primary/10" : "hover:bg-muted",
+                "flex w-full min-w-0 items-start gap-3 border-b border-border/60 px-4 py-3 text-left transition",
+                activeId === c.counterpartId ? "bg-primary/8" : "hover:bg-muted/60",
               )}
             >
-              <p className="truncate text-sm font-medium">{c.counterpartName}</p>
-              {preview && (
-                <p className="truncate text-[11px] text-muted-foreground">Re: {preview}</p>
-              )}
-              <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{c.lastMessage}</p>
-              {c.unread > 0 && (
-                <span className="mt-1 inline-block rounded-full bg-success px-2 py-0.5 text-[10px] text-success-foreground">
-                  {c.unread} new
+              <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full bg-muted text-xs font-semibold uppercase text-muted-foreground">
+                {c.counterpartName.slice(0, 1)}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center justify-between gap-2">
+                  <span className="truncate text-sm font-medium">{c.counterpartName}</span>
+                  {c.unread > 0 && (
+                    <span className="shrink-0 rounded-md bg-success px-1.5 py-0.5 text-[10px] font-medium text-success-foreground">
+                      {c.unread}
+                    </span>
+                  )}
                 </span>
-              )}
+                {preview && (
+                  <span className="mt-0.5 inline-block max-w-full truncate rounded-md bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                    {preview}
+                  </span>
+                )}
+                <span className="mt-0.5 block truncate text-[11px] text-muted-foreground">{c.lastMessage}</span>
+              </span>
             </button>
           );
         })}

@@ -81,3 +81,26 @@ export async function sendVerificationEmail(email: string, token: string) {
     `,
   });
 }
+
+export async function sendPasswordResetEmail(email: string, token: string) {
+  const resetUrl = `${appBaseUrl()}/reset-password?token=${encodeURIComponent(token)}`;
+  return sendEmail({
+    to: email,
+    subject: "Reset your HomeConnect password",
+    text: `Reset your password by opening this link (expires in 1 hour): ${resetUrl}`,
+    html: `
+      <div style="font-family: system-ui, sans-serif; max-width: 480px; margin: 0 auto;">
+        <h1 style="font-size: 22px;">Reset your password</h1>
+        <p>We received a request to reset the password for your HomeConnect account.</p>
+        <p style="margin: 28px 0;">
+          <a href="${resetUrl}"
+             style="background:#0f172a;color:#fff;padding:12px 20px;border-radius:999px;text-decoration:none;display:inline-block;">
+            Choose a new password
+          </a>
+        </p>
+        <p style="color:#64748b;font-size:13px;">This link expires in 1 hour. If you did not request a reset, you can ignore this email.</p>
+        <p style="color:#64748b;font-size:13px;">If the button does not work, open:<br/>${resetUrl}</p>
+      </div>
+    `,
+  });
+}

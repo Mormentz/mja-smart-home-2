@@ -86,6 +86,8 @@ export function ArtisansHubPage({
   artisans,
   categories,
   initialFilters,
+  hubPath = "/services",
+  hubLabel = "Services",
 }: {
   artisans: ArtisanListItem[];
   categories: CategoryChip[];
@@ -96,6 +98,8 @@ export function ArtisansHubPage({
     area: string;
     q: string;
   };
+  hubPath?: string;
+  hubLabel?: string;
 }) {
   const router = useRouter();
   const primary = categories.filter((c) => c.isPrimary);
@@ -136,7 +140,7 @@ export function ArtisansHubPage({
     if (merged.area) params.set("area", merged.area);
     if (merged.q.trim()) params.set("q", merged.q.trim());
     const qs = params.toString();
-    router.push(qs ? `/artisans?${qs}` : "/artisans");
+    router.push(qs ? `${hubPath}?${qs}` : hubPath);
   }
 
   return (
@@ -144,7 +148,7 @@ export function ArtisansHubPage({
       <section className="relative min-h-[70vh] w-full overflow-hidden bg-ink text-ink-foreground">
         <img
           src={imageSrc(heroGroup)}
-          alt="Verified HomeConnect artisans"
+          alt={`Verified HomeConnect ${hubLabel.toLowerCase()}`}
           className="absolute inset-0 h-full w-full object-cover opacity-40"
           width={1600}
           height={1200}
@@ -152,28 +156,28 @@ export function ArtisansHubPage({
         <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/85 to-ink/40" />
         <Header variant="dark" />
         <div className="relative container-page flex min-h-[70vh] flex-col justify-end pb-14 pt-36 md:pb-16 md:pt-40">
-          <p className="text-sm uppercase tracking-[0.2em] text-ink-foreground/65">Artisan Hub</p>
+          <p className="text-sm uppercase tracking-[0.2em] text-ink-foreground/65">{hubLabel}</p>
           <h1 className="mt-4 max-w-3xl font-display text-4xl font-semibold text-balance md:text-6xl">
             Verified pros for every home fix in{" "}
             <span className="text-success">Abuja</span>.
           </h1>
           <p className="mt-4 max-w-xl text-lg text-ink-foreground/75">
             Real-time availability, escrow payments, skill badges, and emergency help — hire
-            trusted artisans or join the network as a professional.
+            trusted professionals or join the network.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <a
               href="#directory"
               className="group inline-flex items-center gap-2 rounded-full bg-success px-6 py-3.5 font-semibold text-ink transition hover:brightness-105"
             >
-              Hire an artisan
+              Hire a professional
               <ArrowUpRight size={18} className="transition-transform group-hover:rotate-45" />
             </a>
             <Link
-              href="/artisans/join"
+              href={`${hubPath}/join`}
               className="inline-flex items-center gap-2 rounded-full border border-ink-foreground/25 px-6 py-3.5 transition hover:bg-ink-foreground/5"
             >
-              Become an artisan
+              Offer a service
             </Link>
           </div>
         </div>
@@ -354,7 +358,7 @@ export function ArtisansHubPage({
             return (
               <Link
                 key={a.id}
-                href={`/artisans/${a.id}`}
+                href={`${hubPath}/${a.id}`}
                 className="group overflow-hidden rounded-3xl border border-border bg-card shadow-soft transition hover:shadow-elegant"
               >
                 <div className="relative aspect-[16/10] overflow-hidden">

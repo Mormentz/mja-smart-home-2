@@ -6,14 +6,11 @@ import { randomBytes } from "crypto";
 import { KycDocType, KycLevel, VerificationStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
+import { getAdminSessionOrNull } from "@/lib/auth/admin";
 import { prisma } from "@/lib/prisma";
 
 async function requireAdmin() {
-  const session = await auth();
-  if (!session?.user?.id || session.user.role !== "ADMIN") {
-    return null;
-  }
-  return session;
+  return getAdminSessionOrNull();
 }
 
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -29,6 +26,34 @@ async function requireUser() {
   const session = await auth();
   if (!session?.user?.id) return null;
   return session;
+}
+
+/** Save location fields for any role during KYC (not artisan-only). */
+export async function saveKycLocation(data: {
+  stateCode: string;
+  lgaName: string;
+  areaName: string;
+  lat?: number | null;
+  lng?: number | null;
+}) {
+  const session = await requireUser();
+  if (!session) return { error: "Unauthorized" };
+  if (!data.stateCode?.trim() || !data.lgaName?.trim() || !data.areaName?.trim()) {
+    return { error: "Complete State / LGA / Area" };
+  }
+  await prisma.user.update({
+    where: { id: session.user.id },
+    data: {
+      stateCode: data.stateCode.trim(),
+      lgaName: data.lgaName.trim(),
+      areaName: data.areaName.trim(),
+      lat: data.lat ?? undefined,
+      lng: data.lng ?? undefined,
+    },
+  });
+  revalidatePath("/dashboard/kyc");
+  revalidatePath("/dashboard/settings");
+  return { success: true };
 }
 
 export async function uploadKycDocument(formData: FormData) {
@@ -79,7 +104,7 @@ export async function uploadKycDocument(formData: FormData) {
 
   revalidatePath("/dashboard/onboarding/artisan");
   revalidatePath("/dashboard/services");
-  revalidatePath("/dashboard/admin/verifications");
+  revalidatePath("/admin/verifications");
   return { success: true, document: doc };
 }
 
@@ -138,9 +163,20 @@ export async function submitTier1Kyc(data: {
     },
   });
 
+  const { emitAdminNotification } = await import("@/lib/actions/admin-notifications");
+  await emitAdminNotification({
+    type: "KYC_PENDING",
+    title: "KYC review requested",
+    body: `${legalName} submitted Tier 1 KYC`,
+    href: `/admin/verifications/kyc/${session.user.id}`,
+    entityType: "user",
+    entityId: session.user.id,
+    severity: "ACTION",
+  });
+
   revalidatePath("/dashboard/onboarding/artisan");
   revalidatePath("/dashboard/services");
-  revalidatePath("/dashboard/admin/verifications");
+  revalidatePath("/admin/verifications");
   return { success: true };
 }
 
@@ -175,7 +211,7 @@ export async function submitTier2Kyc(data: { bvn?: string }) {
   });
 
   revalidatePath("/dashboard/services");
-  revalidatePath("/dashboard/admin/verifications");
+  revalidatePath("/admin/verifications");
   return { success: true };
 }
 
@@ -205,7 +241,7 @@ export async function submitTier3Kyc() {
   });
 
   revalidatePath("/dashboard/services");
-  revalidatePath("/dashboard/admin/verifications");
+  revalidatePath("/admin/verifications");
   return { success: true };
 }
 
@@ -280,7 +316,22 @@ export async function decideKycDocument(
     });
   }
 
-  revalidatePath("/dashboard/admin/verifications");
+  const { writeAdminAudit } = await import("@/lib/admin/audit");
+  const { resolveAdminNotificationsForEntity } = await import("@/lib/actions/admin-notifications");
+  await writeAdminAudit({
+    actorId: session.user.id,
+    action: `KYC_DOC_${decision}`,
+    entity: "User",
+    entityId: doc.userId,
+    meta: { documentId, tier: doc.tier, type: doc.type, note },
+  });
+  if (decision === "VERIFIED" || decision === "REJECTED") {
+    await resolveAdminNotificationsForEntity("user", doc.userId);
+  }
+
+  revalidatePath("/admin/verifications");
+  revalidatePath(`/admin/verifications/kyc/${doc.userId}`);
+  revalidatePath(`/admin/users/${doc.userId}`);
   revalidatePath("/dashboard/onboarding/artisan");
   revalidatePath("/dashboard/services");
   return { success: true };
@@ -320,10 +371,8 @@ export async function artisanCanGoAvailable(userId: string) {
   });
   if (!user || user.role !== "ARTISAN") return false;
   return (
-    user.kycStatus === "VERIFIED" &&
-    (user.kycLevel === "BASIC" ||
-      user.kycLevel === "STANDARD" ||
-      user.kycLevel === "ENHANCED") &&
+    user.kycStatus === VerificationStatus.VERIFIED &&
+    user.kycLevel === KycLevel.ENHANCED &&
     Boolean(user.serviceProfile?.verified)
   );
 }

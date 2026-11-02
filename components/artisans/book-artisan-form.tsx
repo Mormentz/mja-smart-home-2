@@ -38,12 +38,16 @@ export function BookArtisanForm({
       urgency,
     });
     setLoading(false);
-    if (result.error) {
+    if ("error" in result && result.error) {
       toast.error(result.error);
+      if ("upgradeHref" in result && result.upgradeHref) {
+        router.push(String(result.upgradeHref));
+      }
       return;
     }
+    if (!("priceEstimate" in result) || !result.priceEstimate) return;
     toast.success(
-      `Job booked — estimate ${formatMoney(result.priceEstimate)}, ETA ~${result.etaMinutes} min (held in escrow)`,
+      `Job booked — estimate ${formatMoney(result.priceEstimate)}, ETA ~${result.etaMinutes ?? "—"} min (held in escrow)`,
     );
     router.push("/dashboard/jobs");
   }

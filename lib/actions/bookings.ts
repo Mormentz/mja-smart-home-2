@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { BookingKind } from "@prisma/client";
 import { z } from "zod";
 import { auth } from "@/auth";
+import { kycGateError, requireUserTier1 } from "@/lib/auth/kyc-gate";
 import { prisma } from "@/lib/prisma";
 
 const bookingSchema = z.object({
@@ -24,6 +25,15 @@ export async function createBooking(data: {
 
   if (!["USER", "AGENT"].includes(session.user.role)) {
     return { error: "Only users and agents can book" };
+  }
+
+  if (session.user.role === "USER") {
+    const kyc = await requireUserTier1(session.user.id);
+    if (!kyc.ok) return kycGateError(kyc);
+  } else {
+    const { requireProTier3 } = await import("@/lib/auth/kyc-gate");
+    const kyc = await requireProTier3(session.user.id);
+    if (!kyc.ok) return kycGateError(kyc);
   }
 
   const parsed = bookingSchema.safeParse({
@@ -53,6 +63,18 @@ export async function createBooking(data: {
     return { error: "Purchase interest is only for sale listings" };
   }
 
+  const existing = await prisma.booking.findFirst({
+    where: {
+      propertyId: parsed.data.propertyId,
+      userId: session.user.id,
+      kind: parsed.data.kind as BookingKind,
+      status: { in: ["PENDING", "APPROVED"] },
+    },
+  });
+  if (existing) {
+    return { error: "You already have an open booking for this property", bookingId: existing.id };
+  }
+
   await prisma.booking.create({
     data: {
       propertyId: parsed.data.propertyId,
@@ -63,6 +85,7 @@ export async function createBooking(data: {
   });
 
   revalidatePath("/dashboard/bookings");
+  revalidatePath(`/properties/${parsed.data.propertyId}`);
   return { success: true };
 }
 
@@ -110,6 +133,29 @@ export async function updateBookingStatus(bookingId: string, status: "APPROVED" 
   await prisma.booking.update({
     where: { id: bookingId },
     data: { status },
+  });
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/bookings");
+  return { success: true };
+}
+
+/** Renter/requester can cancel their own pending booking. */
+export async function cancelOwnBooking(bookingId: string) {
+  const session = await auth();
+  if (!session?.user?.id) return { error: "Unauthorized" };
+
+  const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
+  if (!booking || booking.userId !== session.user.id) {
+    return { error: "Booking not found" };
+  }
+  if (booking.status !== "PENDING") {
+    return { error: "Only pending bookings can be cancelled" };
+  }
+
+  await prisma.booking.update({
+    where: { id: bookingId },
+    data: { status: "CANCELLED" },
   });
 
   revalidatePath("/dashboard");

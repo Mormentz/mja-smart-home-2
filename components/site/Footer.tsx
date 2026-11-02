@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Instagram, Twitter, Linkedin, ArrowUpRight } from "lucide-react";
+import { HomeConnectLogo } from "@/components/brand/homeconnect-logo";
 
 export function Footer() {
   return (
@@ -28,14 +29,9 @@ export function Footer() {
 
         <div className="relative grid md:grid-cols-4 gap-10 mt-14">
           <div className="md:col-span-2">
-            <div className="flex items-center gap-2">
-              <span className="grid place-items-center w-9 h-9 rounded-full bg-success">
-                <span className="w-3 h-3 rounded-sm bg-ink rotate-45" />
-              </span>
-              <span className="font-display text-lg font-bold">HomeConnect</span>
-            </div>
+            <HomeConnectLogo onDark height={32} />
             <p className="mt-4 text-ink-foreground/70 max-w-sm">
-              Find. Connect. Move. Live. The housing ecosystem for renters, buyers, landlords and artisans.
+              Find. Connect. Move. Live. Housing, verified services, jobs, and equipment rentals in one place.
             </p>
             <div className="mt-6 flex gap-2">
               {[Instagram, Twitter, Linkedin].map((Icon, i) => (
@@ -53,9 +49,12 @@ export function Footer() {
           <FooterCol
             title="Platform"
             links={[
-              { href: "/properties", label: "Browse" },
-              { href: "/artisans", label: "Artisans" },
-              { href: "/artisans/join", label: "Become an artisan" },
+              { href: "/properties", label: "Browse homes" },
+              { href: "/services", label: "Services" },
+              { href: "/jobs", label: "Jobs" },
+              { href: "/rentals", label: "Rentals" },
+              { href: "/services/join", label: "Offer a service" },
+              { href: "/signup/agent", label: "List as an agent" },
               { href: "/about", label: "About" },
               { href: "/contact", label: "Contact" },
             ]}
@@ -65,7 +64,7 @@ export function Footer() {
             links={[
               { href: "/about", label: "Our Story" },
               { href: "/contact", label: "Support" },
-              { href: "/", label: "Careers" },
+              { href: "/jobs", label: "Careers" },
             ]}
           />
         </div>

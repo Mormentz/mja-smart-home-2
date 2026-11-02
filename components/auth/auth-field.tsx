@@ -12,6 +12,8 @@ type AuthFieldProps = {
   required?: boolean;
   minLength?: number;
   trailing?: React.ReactNode;
+  /** Use on dark backgrounds (e.g. admin login) so labels stay readable. */
+  onDark?: boolean;
 };
 
 export function AuthField({
@@ -25,14 +27,21 @@ export function AuthField({
   required,
   minLength,
   trailing,
+  onDark = false,
 }: AuthFieldProps) {
   return (
     <div className="space-y-2">
-      <label htmlFor={id} className="text-sm font-medium text-ink/80">
+      <label
+        htmlFor={id}
+        className={cn("text-sm font-medium", onDark ? "text-white/80" : "text-ink/80")}
+      >
         {label}
       </label>
       <div className="relative">
-        <Icon size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+        <Icon
+          size={18}
+          className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground"
+        />
         <input
           id={id}
           type={type}
@@ -42,7 +51,7 @@ export function AuthField({
           required={required}
           minLength={minLength}
           className={cn(
-            "w-full h-12 rounded-full border border-border/80 bg-white pl-11 text-sm outline-none transition",
+            "h-12 w-full rounded-full border border-border/80 bg-white pl-11 text-sm text-ink caret-ink outline-none transition",
             "placeholder:text-muted-foreground/70 focus:border-ink/30 focus:ring-2 focus:ring-ink/5",
             trailing ? "pr-12" : "pr-4",
           )}

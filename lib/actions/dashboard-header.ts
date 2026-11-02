@@ -12,25 +12,23 @@ export type SearchHit = {
 };
 
 const NAV: { href: string; label: string; roles: Role[] }[] = [
-  { href: "/dashboard", label: "Dashboard", roles: ["USER", "AGENT", "ARTISAN", "ADMIN"] },
-  { href: "/dashboard/admin", label: "Admin overview", roles: ["ADMIN"] },
-  { href: "/dashboard/admin/users", label: "Users", roles: ["ADMIN"] },
-  { href: "/dashboard/admin/artisans", label: "Artisans", roles: ["ADMIN"] },
-  { href: "/dashboard/admin/properties", label: "All properties", roles: ["ADMIN"] },
-  { href: "/dashboard/admin/verifications", label: "Verifications", roles: ["ADMIN"] },
-  { href: "/dashboard/admin/content", label: "Site content", roles: ["ADMIN"] },
-  { href: "/dashboard/admin/amenities", label: "Amenities", roles: ["ADMIN"] },
+  { href: "/dashboard", label: "Dashboard", roles: ["USER", "AGENT", "ARTISAN"] },
   { href: "/dashboard/bookings", label: "Bookings", roles: ["USER", "AGENT"] },
   { href: "/dashboard/leases", label: "Leases & escrow", roles: ["USER", "AGENT"] },
   { href: "/dashboard/saved", label: "Saved homes", roles: ["USER"] },
   { href: "/dashboard/move-in", label: "Move-in", roles: ["USER"] },
   { href: "/dashboard/listings", label: "My listings", roles: ["AGENT"] },
-  { href: "/dashboard/jobs", label: "Jobs", roles: ["USER", "AGENT", "ARTISAN"] },
-  { href: "/properties", label: "Browse homes", roles: ["USER", "AGENT", "ARTISAN"] },
-  { href: "/artisans", label: "Browse artisans", roles: ["USER", "AGENT"] },
-  { href: "/dashboard/messages", label: "Messages", roles: ["USER", "AGENT", "ARTISAN", "ADMIN"] },
-  { href: "/dashboard/services", label: "Services", roles: ["ARTISAN"] },
-  { href: "/dashboard/settings", label: "Settings", roles: ["USER", "AGENT", "ARTISAN", "ADMIN"] },
+  { href: "/dashboard/jobs", label: "Service jobs", roles: ["USER", "AGENT", "ARTISAN"] },
+  { href: "/dashboard/employment", label: "Employment", roles: ["USER", "AGENT"] },
+  { href: "/dashboard/equipment", label: "My rentals", roles: ["USER", "AGENT"] },
+  { href: "/properties", label: "Browse homes", roles: ["USER", "AGENT"] },
+  { href: "/services", label: "Browse services", roles: ["USER", "AGENT"] },
+  { href: "/jobs", label: "Browse jobs", roles: ["USER", "AGENT"] },
+  { href: "/rentals", label: "Browse rentals", roles: ["USER", "AGENT"] },
+  { href: "/dashboard/messages", label: "Messages", roles: ["USER", "AGENT", "ARTISAN"] },
+  { href: "/dashboard/services", label: "My services", roles: ["ARTISAN"] },
+  { href: "/dashboard/onboarding/artisan", label: "Onboarding", roles: ["ARTISAN"] },
+  { href: "/dashboard/settings", label: "Settings", roles: ["USER", "AGENT", "ARTISAN"] },
 ];
 
 export async function searchDashboard(query: string): Promise<SearchHit[]> {
@@ -130,7 +128,7 @@ export async function getHeaderNotifications() {
       items.unshift({
         id: "pending-kyc",
         title: `${pendingKyc} KYC review${pendingKyc === 1 ? "" : "s"}`,
-        href: "/dashboard/admin/verifications",
+        href: "/admin/verifications",
         meta: "Awaiting decision",
       });
     }

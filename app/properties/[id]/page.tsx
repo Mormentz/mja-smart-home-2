@@ -1,11 +1,13 @@
 import { PropertyDetailPage } from "@/components/pages/property-detail-page";
 import { isPropertySaved } from "@/lib/actions/saved-properties";
+import { getPropertyEngagement } from "@/lib/actions/property-engagement";
 import { getProperty, getProperties, getPropertyIds } from "@/lib/properties";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 type PageProps = {
   params: Promise<{ id: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>> | Record<string, string | string[] | undefined>;
 };
 
 export async function generateStaticParams() {
@@ -34,12 +36,20 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export default async function Page({ params }: PageProps) {
+function one(v: string | string[] | undefined) {
+  return Array.isArray(v) ? v[0] : v;
+}
+
+export default async function Page({ params, searchParams }: PageProps) {
   const { id } = await params;
-  const [property, allProperties, saved] = await Promise.all([
+  const sp = (await searchParams) ?? {};
+  const escrowJustSecured = one(sp.escrow) === "secured";
+
+  const [property, allProperties, saved, engagement] = await Promise.all([
     getProperty(id),
     getProperties(),
     isPropertySaved(id),
+    getPropertyEngagement(id),
   ]);
 
   if (!property) {
@@ -48,5 +58,13 @@ export default async function Page({ params }: PageProps) {
 
   const similar = allProperties.filter((p) => p.id !== property.id).slice(0, 3);
 
-  return <PropertyDetailPage property={property} similar={similar} saved={saved} />;
+  return (
+    <PropertyDetailPage
+      property={property}
+      similar={similar}
+      saved={saved}
+      engagement={engagement}
+      escrowJustSecured={escrowJustSecured}
+    />
+  );
 }

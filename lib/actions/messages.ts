@@ -58,6 +58,15 @@ export async function sendMessage(data: {
     return { error: "You must be signed in to send messages" };
   }
 
+  const { kycGateError, requireProTier3, requireUserTier1 } = await import("@/lib/auth/kyc-gate");
+  if (session.user.role === "USER") {
+    const kyc = await requireUserTier1(session.user.id);
+    if (!kyc.ok) return kycGateError(kyc);
+  } else if (session.user.role === "AGENT" || session.user.role === "ARTISAN") {
+    const kyc = await requireProTier3(session.user.id);
+    if (!kyc.ok) return kycGateError(kyc);
+  }
+
   const parsed = messageSchema.safeParse({
     ...data,
     content: data.content ?? "",
@@ -301,10 +310,11 @@ export async function updateServiceProfile(data: {
     include: { serviceProfile: true },
   });
 
-  // Tier 1 KYC (user.kycStatus VERIFIED) required before going available / listing
-  const tier1Ok = user?.kycStatus === "VERIFIED";
+  // Tier 3 (Enhanced) KYC required before going available
+  const { hasVerifiedAtLeast } = await import("@/lib/auth/kyc-gate");
+  const tier3Ok = user ? hasVerifiedAtLeast(user, 3) && Boolean(user.serviceProfile?.verified) : false;
   let available = data.available;
-  if (available && !tier1Ok) {
+  if (available && !tier3Ok) {
     available = false;
   }
 
@@ -327,7 +337,7 @@ export async function updateServiceProfile(data: {
     },
   });
 
-  if (!tier1Ok) {
+  if (!tier3Ok) {
     await prisma.serviceProfile.update({
       where: { userId: session.user.id },
       data: { available: false },

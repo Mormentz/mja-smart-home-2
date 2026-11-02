@@ -14,7 +14,7 @@ export default async function LeasesPage() {
       description={
         isOwner
           ? "Manage renter leases and release escrowed rent."
-          : "Secure rent with simulated escrow protection."
+          : "Secure first-month rent with Paystack escrow protection."
       }
     >
       <LeasesPanel leases={leases} mode={isOwner ? "landlord" : "renter"} />

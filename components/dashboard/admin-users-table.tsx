@@ -134,7 +134,7 @@ export function AdminUsersTable({ users }: { users: AdminUser[] }) {
             <TableRow>
               <DashboardTableCell colSpan={6} className="py-8 text-center text-muted-foreground">
                 No users found.{" "}
-                <Link href="/dashboard/admin" className="text-primary underline">
+                <Link href="/admin" className="text-primary underline">
                   Back to overview
                 </Link>
               </DashboardTableCell>

@@ -7,15 +7,12 @@ import {
   SkillBadge,
   VerificationStatus,
 } from "@prisma/client";
-import { auth } from "@/auth";
+import { getAdminSessionOrNull } from "@/lib/auth/admin";
+import { writeAdminAudit } from "@/lib/admin/audit";
 import { prisma } from "@/lib/prisma";
 
 async function requireAdmin() {
-  const session = await auth();
-  if (!session?.user?.id || session.user.role !== "ADMIN") {
-    return null;
-  }
-  return session;
+  return getAdminSessionOrNull();
 }
 
 export async function getAdminStats() {
@@ -32,6 +29,11 @@ export async function getAdminStats() {
     pendingArtisans,
     escrowHeld,
     openJobs,
+    openDisputes,
+    openPrivacy,
+    openFlags,
+    pendingTours,
+    activeLeases,
   ] = await Promise.all([
     prisma.user.count({ where: { role: "USER" } }),
     prisma.user.count({ where: { role: "AGENT" } }),
@@ -47,6 +49,11 @@ export async function getAdminStats() {
     prisma.serviceJob.count({
       where: { status: { in: ["REQUESTED", "QUOTED", "ACCEPTED", "IN_PROGRESS"] } },
     }),
+    prisma.rentalDispute.count({ where: { status: { in: ["OPEN", "UNDER_REVIEW"] } } }),
+    prisma.privacyRequest.count({ where: { status: "OPEN" } }),
+    prisma.flaggedAccount.count({ where: { resolved: false } }),
+    prisma.booking.count({ where: { status: "PENDING" } }),
+    prisma.lease.count({ where: { status: "ACTIVE" } }),
   ]);
 
   return {
@@ -59,6 +66,11 @@ export async function getAdminStats() {
     pendingArtisans,
     escrowHeld: escrowHeld._sum.amount ?? 0,
     openJobs,
+    openDisputes,
+    openPrivacy,
+    openFlags,
+    pendingTours,
+    activeLeases,
   };
 }
 
@@ -127,8 +139,8 @@ export async function setUserActive(userId: string, active: boolean) {
   if (userId === session.user.id) return { error: "Cannot deactivate yourself" };
 
   await prisma.user.update({ where: { id: userId }, data: { active } });
-  revalidatePath("/dashboard/admin/users");
-  revalidatePath("/dashboard/admin/artisans");
+  revalidatePath("/admin/users");
+  revalidatePath("/admin/artisans");
   return { success: true };
 }
 
@@ -162,8 +174,8 @@ export async function setUserRole(userId: string, role: Role) {
     });
   }
 
-  revalidatePath("/dashboard/admin/users");
-  revalidatePath("/dashboard/admin/artisans");
+  revalidatePath("/admin/users");
+  revalidatePath("/admin/artisans");
   return { success: true };
 }
 
@@ -199,8 +211,8 @@ export async function decideKyc(userId: string, decision: "VERIFIED" | "REJECTED
     });
   }
 
-  revalidatePath("/dashboard/admin/users");
-  revalidatePath("/dashboard/admin/verifications");
+  revalidatePath("/admin/users");
+  revalidatePath("/admin/verifications");
   revalidatePath("/dashboard/settings");
   revalidatePath("/dashboard/services");
   return { success: true };
@@ -210,7 +222,15 @@ export async function setPropertyFeatured(propertyId: string, featured: boolean)
   const session = await requireAdmin();
   if (!session) return { error: "Unauthorized" };
   await prisma.property.update({ where: { id: propertyId }, data: { featured } });
-  revalidatePath("/dashboard/admin/properties");
+  await writeAdminAudit({
+    actorId: session.user.id,
+    action: featured ? "PROPERTY_FEATURED" : "PROPERTY_UNFEATURED",
+    entity: "Property",
+    entityId: propertyId,
+  });
+  revalidatePath("/admin/properties");
+  revalidatePath(`/admin/properties/${propertyId}`);
+  revalidatePath("/admin/content");
   revalidatePath("/properties");
   return { success: true };
 }
@@ -219,7 +239,7 @@ export async function deletePropertyAsAdmin(propertyId: string) {
   const session = await requireAdmin();
   if (!session) return { error: "Unauthorized" };
   await prisma.property.delete({ where: { id: propertyId } });
-  revalidatePath("/dashboard/admin/properties");
+  revalidatePath("/admin/properties");
   revalidatePath("/properties");
   return { success: true };
 }
@@ -231,7 +251,7 @@ export async function setArtisanBadge(userId: string, badge: SkillBadge) {
     where: { userId },
     data: { skillBadge: badge },
   });
-  revalidatePath("/dashboard/admin/artisans");
+  revalidatePath("/admin/artisans");
   return { success: true };
 }
 
@@ -239,15 +259,31 @@ export async function getSiteContent(key: string) {
   return prisma.siteContent.findUnique({ where: { key } });
 }
 
+/** Fetch several content keys at once as a { key: value } map. */
+export async function getSiteContentMap(keys: string[]) {
+  const rows = await prisma.siteContent.findMany({ where: { key: { in: keys } } });
+  return Object.fromEntries(rows.map((r) => [r.key, r.value])) as Record<string, string>;
+}
+
 export async function upsertSiteContent(key: string, value: string) {
   const session = await requireAdmin();
   if (!session) return { error: "Unauthorized" };
+  if (!/^[a-z0-9_]{2,64}$/.test(key)) return { error: "Invalid content key" };
+  if (value.length > 10_000) return { error: "Content too long" };
   await prisma.siteContent.upsert({
     where: { key },
     update: { value },
     create: { key, value },
   });
-  revalidatePath("/dashboard/admin/content");
+  await writeAdminAudit({
+    actorId: session.user.id,
+    action: "SITE_CONTENT_UPDATE",
+    entity: "SiteContent",
+    entityId: key,
+    meta: { length: value.length },
+  });
+  revalidatePath("/admin/content");
+  revalidatePath("/");
   return { success: true };
 }
 
