@@ -8,11 +8,9 @@ import {
   BookingStatus,
   EscrowStatus,
   JobStatus,
-  PrismaClient,
   VerificationStatus,
-} from "@prisma/client";
-
-const prisma = new PrismaClient();
+} from "@/generated/prisma/client";
+import { prisma } from "@/lib/prisma";
 const results: { role: string; step: string; ok: boolean; detail?: string }[] = [];
 
 function log(role: string, step: string, ok: boolean, detail?: string) {

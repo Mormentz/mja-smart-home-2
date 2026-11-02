@@ -1,6 +1,6 @@
 "use server";
 
-import { BookingStatus, EscrowStatus, LeaseStatus } from "@prisma/client";
+import { BookingStatus, EscrowStatus, LeaseStatus } from "@/generated/prisma/client";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 

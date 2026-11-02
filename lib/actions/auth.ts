@@ -2,7 +2,7 @@
 
 import bcrypt from "bcryptjs";
 import { randomBytes } from "crypto";
-import { KycLevel, Role, VerificationStatus } from "@prisma/client";
+import { KycLevel, Role, VerificationStatus } from "@/generated/prisma/client";
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { z } from "zod";

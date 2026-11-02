@@ -1,6 +1,6 @@
 "use client";
 
-import type { Role } from "@prisma/client";
+import type { Role } from "@/generated/prisma/browser";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 
 type DashboardLayoutClientProps = {

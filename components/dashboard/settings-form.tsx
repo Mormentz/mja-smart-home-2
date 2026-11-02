@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { updateProfile } from "@/lib/actions/auth";
 import { roleLabel } from "@/lib/auth/role-labels";
-import type { Role } from "@prisma/client";
+import type { Role } from "@/generated/prisma/browser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

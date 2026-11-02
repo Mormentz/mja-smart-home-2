@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { SkillBadge } from "@prisma/client";
+import { SkillBadge } from "@/generated/prisma/browser";
 import { updateAdminArtisanProfile } from "@/lib/actions/admin-artisans";
 import { setArtisanBadge } from "@/lib/actions/admin";
 import { decideArtisanVerification } from "@/lib/actions/verification";

@@ -1,4 +1,4 @@
-import { KycLevel, Role, VerificationStatus, type User } from "@prisma/client";
+import { KycLevel, Role, VerificationStatus, type User } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export const KYC_REQUIRED = "KYC_REQUIRED" as const;

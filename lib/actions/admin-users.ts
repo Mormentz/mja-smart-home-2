@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { KycLevel, Role, VerificationStatus } from "@prisma/client";
+import { KycLevel, Role, VerificationStatus } from "@/generated/prisma/client";
 import { z } from "zod";
 import { randomBytes } from "crypto";
 import { getAdminSessionOrNull } from "@/lib/auth/admin";

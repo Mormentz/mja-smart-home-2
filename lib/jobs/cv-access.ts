@@ -1,4 +1,4 @@
-import type { CvAccessLevel } from "@prisma/client";
+import type { CvAccessLevel } from "@/generated/prisma/client";
 
 const RANK: Record<CvAccessLevel, number> = {
   PRIVATE: 0,

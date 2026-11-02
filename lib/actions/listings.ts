@@ -1,6 +1,6 @@
 "use server";
 
-import type { PropertyCategory, PropertyType } from "@prisma/client";
+import type { PropertyCategory, PropertyType } from "@/generated/prisma/client";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { auth } from "@/auth";

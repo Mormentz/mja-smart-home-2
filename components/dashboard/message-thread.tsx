@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { Role } from "@prisma/client";
+import type { Role } from "@/generated/prisma/browser";
 import {
   ChevronLeft,
   Download,

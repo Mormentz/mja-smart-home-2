@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { Role } from "@prisma/client";
+import type { Role } from "@/generated/prisma/browser";
 import {
   Calendar,
   FileText,

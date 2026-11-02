@@ -1,6 +1,6 @@
 "use server";
 
-import { VerificationStatus } from "@prisma/client";
+import { VerificationStatus } from "@/generated/prisma/client";
 import { getAdminSessionOrNull } from "@/lib/auth/admin";
 import { prisma } from "@/lib/prisma";
 

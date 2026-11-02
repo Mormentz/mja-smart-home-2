@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { assertNoPrivateLeak, toPublicJobSeeker } from "@/lib/jobs/public-profile";
-import type { JobSeekerProfile } from "@prisma/client";
+import type { JobSeekerProfile } from "@/generated/prisma/client";
 
 function base(over: Partial<JobSeekerProfile> = {}): JobSeekerProfile {
   return {

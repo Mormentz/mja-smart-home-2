@@ -1,4 +1,4 @@
-import type { JobSeekerProfile } from "@prisma/client";
+import type { JobSeekerProfile } from "@/generated/prisma/client";
 
 export type PublicJobSeekerDto = {
   id: string;

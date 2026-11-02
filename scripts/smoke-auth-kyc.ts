@@ -5,12 +5,10 @@
 import bcrypt from "bcryptjs";
 import {
   KycLevel,
-  PrismaClient,
   Role,
   VerificationStatus,
-} from "@prisma/client";
-
-const prisma = new PrismaClient();
+} from "@/generated/prisma/client";
+import { prisma } from "../lib/prisma";
 const results: { step: string; ok: boolean; detail?: string }[] = [];
 
 function log(step: string, ok: boolean, detail?: string) {

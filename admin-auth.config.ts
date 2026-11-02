@@ -1,5 +1,5 @@
 import type { NextAuthConfig } from "next-auth";
-import type { Role } from "@prisma/client";
+import type { Role } from "@/generated/prisma/client";
 
 export const ADMIN_SESSION_COOKIE = "hc-admin.session-token";
 

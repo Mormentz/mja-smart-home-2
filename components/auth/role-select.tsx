@@ -1,6 +1,6 @@
 "use client";
 
-import type { Role } from "@prisma/client";
+import type { Role } from "@/generated/prisma/browser";
 import { cn } from "@/lib/utils";
 import { roleLabel } from "@/lib/auth/role-labels";
 

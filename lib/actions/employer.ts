@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import type { EmployerKind, EmploymentType } from "@prisma/client";
+import type { EmployerKind, EmploymentType } from "@/generated/prisma/client";
 import { requireAuth } from "@/lib/auth/roles";
 import { requireAdminSession } from "@/lib/auth/admin";
 import { allocateHcId } from "@/lib/ids/allocate-hc-id";

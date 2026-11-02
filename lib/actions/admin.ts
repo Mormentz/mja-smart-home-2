@@ -6,7 +6,7 @@ import {
   Role,
   SkillBadge,
   VerificationStatus,
-} from "@prisma/client";
+} from "@/generated/prisma/client";
 import { getAdminSessionOrNull } from "@/lib/auth/admin";
 import { writeAdminAudit } from "@/lib/admin/audit";
 import { prisma } from "@/lib/prisma";

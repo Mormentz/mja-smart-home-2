@@ -7,16 +7,14 @@ import {
   KycLevel,
   LeaseStatus,
   MoveInStatus,
-  PrismaClient,
   Role,
   SkillBadge,
   VerificationStatus,
-} from "@prisma/client";
+} from "@/generated/prisma/client";
 import bcrypt from "bcryptjs";
+import { prisma } from "../lib/prisma";
 import { DEMO_PASSWORD, DEMO_USERS, SEED_AMENITIES, SEED_NEIGHBORHOODS, SEED_PROPERTIES } from "../lib/seed-data";
 import { TAXONOMY_CATEGORIES, slugify } from "../lib/services/taxonomy-data";
-
-const prisma = new PrismaClient();
 
 async function seedServiceTaxonomy() {
   for (const cat of TAXONOMY_CATEGORIES) {

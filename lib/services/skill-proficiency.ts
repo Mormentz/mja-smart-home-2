@@ -1,4 +1,4 @@
-import type { SkillProficiency } from "@prisma/client";
+import type { SkillProficiency } from "@/generated/prisma/client";
 
 export const SKILL_PROFICIENCY_LEVELS = [
   "BEGINNER",

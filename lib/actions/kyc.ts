@@ -3,7 +3,7 @@
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import { randomBytes } from "crypto";
-import { KycDocType, KycLevel, VerificationStatus } from "@prisma/client";
+import { KycDocType, KycLevel, VerificationStatus } from "@/generated/prisma/client";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { getAdminSessionOrNull } from "@/lib/auth/admin";

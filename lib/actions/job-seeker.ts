@@ -6,7 +6,7 @@ import type {
   IdDocumentType,
   SkillProficiency,
   WorkArrangement,
-} from "@prisma/client";
+} from "@/generated/prisma/client";
 import { requireAuth } from "@/lib/auth/roles";
 import { requireAdminSession } from "@/lib/auth/admin";
 import { allocateHcId } from "@/lib/ids/allocate-hc-id";

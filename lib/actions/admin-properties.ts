@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { PropertyCategory, PropertyType, VerificationStatus } from "@prisma/client";
+import { PropertyCategory, PropertyType, VerificationStatus } from "@/generated/prisma/client";
 import { z } from "zod";
 import { getAdminSessionOrNull } from "@/lib/auth/admin";
 import { writeAdminAudit } from "@/lib/admin/audit";

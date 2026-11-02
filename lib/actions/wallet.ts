@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { WithdrawalStatus } from "@prisma/client";
+import { WithdrawalStatus } from "@/generated/prisma/client";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { getAdminSessionOrNull } from "@/lib/auth/admin";

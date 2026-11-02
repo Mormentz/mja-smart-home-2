@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { EscrowPurpose, EscrowStatus, JobStatus, JobUrgency } from "@prisma/client";
+import { EscrowPurpose, EscrowStatus, JobStatus, JobUrgency } from "@/generated/prisma/client";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";

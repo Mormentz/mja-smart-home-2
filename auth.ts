@@ -8,7 +8,8 @@ import { prisma } from "@/lib/prisma";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
-  adapter: PrismaAdapter(prisma),
+  // @auth/prisma-adapter types still target Prisma 6 client shapes.
+  adapter: PrismaAdapter(prisma as never),
   // Expected credential failures (wrong password / unverified / admin) must not dump stacks.
   logger: {
     error(error) {

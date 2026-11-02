@@ -1,4 +1,4 @@
-import type { Role } from "@prisma/client";
+import type { Role } from "@/generated/prisma/client";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { roleLabel } from "@/lib/auth/role-labels";

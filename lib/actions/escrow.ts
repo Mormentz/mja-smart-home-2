@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { EscrowStatus } from "@prisma/client";
+import { EscrowStatus } from "@/generated/prisma/client";
 import { auth } from "@/auth";
 import { getAdminSessionOrNull } from "@/lib/auth/admin";
 import { writeAdminAudit } from "@/lib/admin/audit";

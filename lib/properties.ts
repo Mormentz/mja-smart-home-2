@@ -1,5 +1,5 @@
 import type { StaticImageData } from "next/image";
-import type { PropertyCategory, PropertyType, VerificationStatus } from "@prisma/client";
+import type { PropertyCategory, PropertyType, VerificationStatus } from "@/generated/prisma/client";
 import p1 from "@/assets/property-1.jpg";
 import p2 from "@/assets/property-2.jpg";
 import p3 from "@/assets/property-3.jpg";

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import type { EquipmentCondition, Prisma, RentalDisputeType } from "@prisma/client";
+import type { EquipmentCondition, Prisma, RentalDisputeType } from "@/generated/prisma/client";
 import { requireAuth } from "@/lib/auth/roles";
 import { getAdminSessionOrNull, requireAdminSession } from "@/lib/auth/admin";
 import { writeAdminAudit } from "@/lib/admin/audit";

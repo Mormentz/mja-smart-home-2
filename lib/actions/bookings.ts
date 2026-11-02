@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { BookingKind } from "@prisma/client";
+import { BookingKind } from "@/generated/prisma/client";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { kycGateError, requireUserTier1 } from "@/lib/auth/kyc-gate";

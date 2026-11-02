@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { Prisma, VerificationStatus } from "@prisma/client";
+import { Prisma, VerificationStatus } from "@/generated/prisma/client";
 import { getAdminSessionOrNull } from "@/lib/auth/admin";
 import { writeAdminAudit } from "@/lib/admin/audit";
 import { prisma } from "@/lib/prisma";
