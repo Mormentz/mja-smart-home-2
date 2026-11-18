@@ -17,15 +17,15 @@ Or register fresh accounts. Ensure Postgres is running and `npm run dev` is up b
 
 ## A. Shared / public (any visitor)
 
-- [ ] Homepage loads at `/`
-- [ ] Header shows **Home | Properties | Services | Jobs | Rentals | About | Contact** (no “Artisans”)
+- [x] Homepage loads at `/`
+- [x] Header shows **Home | Properties | Services | Jobs | Rentals | About | Contact** (no “Artisans”)
 - [ ] Footer links to Services, Jobs, Rentals
-- [ ] `/artisans` redirects to `/services`
-- [ ] `/services` directory loads (filters work: category / state / area / search)
-- [ ] `/jobs` hub shows seeker / employer / browse CTAs
-- [ ] `/rentals` hub shows rent / list CTAs
-- [ ] `/about` and `/contact` still work
-- [ ] Login / signup pages load
+- [x] `/artisans` redirects to `/services`
+- [x] `/services` directory loads (filters work: category / state / area / search)
+- [x] `/jobs` hub shows seeker / employer / browse CTAs
+- [x] `/rentals` hub shows rent / list CTAs
+- [x] `/about` and `/contact` still work
+- [x] Login / signup pages load
 
 ---
 
@@ -33,22 +33,22 @@ Or register fresh accounts. Ensure Postgres is running and `npm run dev` is up b
 
 ### Auth & account
 
-- [ ] Sign up as user (or log in as `user@demo.com`)
-- [ ] Email verify flow works if enabled in your env
-- [ ] Dashboard opens; role shown correctly
-- [ ] Settings: change password / profile basics
+- [x] Sign up as user (or log in as `user@demo.com`)
+- [x] Email verify flow works if enabled in your env
+- [x] Dashboard opens; role shown correctly
+- [x] Settings: change password / profile basics
 - [ ] Sign out / sign in again
 
 ### Properties (unchanged)
 
-- [ ] Browse `/properties`
-- [ ] Open a property detail
+- [x] Browse `/properties`
+- [x] Open a property detail
 - [ ] Save a home (Saved homes)
 - [ ] Book a tour / purchase interest
-- [ ] See booking in **Bookings**
-- [ ] Messages with agent/owner (if available)
-- [ ] Leases & escrow (if you have a lease in seed/demo)
-- [ ] Move-in request flow
+- [x] See booking in **Bookings**
+- [x] Messages with agent/owner (if available)
+- [x] Leases & escrow (if you have a lease in seed/demo)
+- [x] Move-in request flow
 
 ### Services (ex-Artisans)
 
@@ -108,18 +108,18 @@ Or register fresh accounts. Ensure Postgres is running and `npm run dev` is up b
 
 ### Registration & onboarding
 
-- [ ] Sign up as artisan / join via Services → Offer a service
-- [ ] Onboarding: location → trades → Tier 1 KYC
+- [x] Sign up as artisan / join via Services → Offer a service
+- [x] Onboarding: location → trades → Tier 1 KYC
 - [ ] Can leave and resume (`onboardingStep`)
 - [ ] Upload selfie / ID; status goes **PENDING**
-- [ ] After admin KYC verify: appears in `/services` directory
-- [ ] Tier 2 / Tier 3 upgrade panel (BVN / address / CAC) when unlocked
+- [x] After admin KYC verify: appears in `/services` directory
+- [x] Tier 2 / Tier 3 upgrade panel (BVN / address / CAC) when unlocked
 
 ### Day-to-day
 
-- [ ] Dashboard **My services**: bio, rate, availability, trades, proficiency
+- [x] Dashboard **My services**: bio, rate, availability, trades, proficiency
 - [ ] Request trade credential verification
-- [ ] Receive customer booking → **Service jobs**
+- [x] Receive customer booking → **Service jobs**
 - [ ] Advance: Accept → In progress → Complete (escrow releases)
 - [ ] Cancel path refunds escrow (if tested)
 - [ ] Browse homes still available; Jobs/Rentals hubs reachable if desired
@@ -128,11 +128,11 @@ Or register fresh accounts. Ensure Postgres is running and `npm run dev` is up b
 
 ## D. Agent (`AGENT`) — quick pass
 
-- [ ] Log in as `agent@demo.com`
-- [ ] Create / edit listings
-- [ ] Manage bookings on own properties
-- [ ] Landlord-side leases / escrow
-- [ ] Browse Services / Jobs / Rentals as a customer of those hubs
+- [x] Log in as `agent@demo.com`
+- [x] Create / edit listings
+- [x] Manage bookings on own properties
+- [x] Landlord-side leases / escrow
+- [x] Browse Services / Jobs / Rentals as a customer of those hubs
 
 ---
 
@@ -140,19 +140,19 @@ Or register fresh accounts. Ensure Postgres is running and `npm run dev` is up b
 
 ### Auth isolation
 
-- [ ] Admin signs in only at `/admin/login` (consumer `/login` rejects ADMIN)
-- [ ] Consumer session cookie cannot open `/admin` or `/api/admin/session`
-- [ ] Legacy `/dashboard/admin/*` redirects to `/admin/*`
+- [x] Admin signs in only at `/admin/login` (consumer `/login` rejects ADMIN)
+- [x] Consumer session cookie cannot open `/admin` or `/api/admin/session`
+- [x] Legacy `/dashboard/admin/*` redirects to `/admin/*`
 - [ ] Admin sign-out clears admin session only
 
 ### Existing (`/admin`)
 
-- [ ] Admin overview cards load
-- [ ] Users list
-- [ ] **Services** (ex-Artisans) table: verify, badges, active
-- [ ] Properties verification
-- [ ] Verifications queue: KYC docs, KYC profiles, properties, artisan credentials
-- [ ] Site content / amenities
+- [x] Admin overview cards load
+- [x] Users list
+- [x] **Services** (ex-Artisans) table: verify, badges, active
+- [x] Properties verification
+- [x] Verifications queue: KYC docs, KYC profiles, properties, artisan credentials
+- [x] Site content / amenities
 
 ### Jobs admin (`/admin/jobs`)
 
@@ -217,6 +217,9 @@ Or register fresh accounts. Ensure Postgres is running and `npm run dev` is up b
 
 | Date | Role | Item | Result | Notes |
 |------|------|------|--------|-------|
-|      |      |      |        |       |
-|      |      |      |        |       |
-|      |      |      |        |       |
+| 2026-11-18 | seed | Demo `emailVerified` null | fixed | Seed now sets `emailVerified`; agent demo KYC → ENHANCED |
+| 2026-11-18 | all | Login form hydration in Playwright/Turbopack | fail | React fiber missing; CSRF credential login works |
+| 2026-11-18 | admin | Long Chromium admin crawl | fail | Page crashed (OOM); request-based checks passed |
+| 2026-11-18 | signup | `registerUser` + `after()` outside request | fail | Script context; accounts still created; token verify OK |
+
+See also [HOMECONNECT-QA-SCORECARD.md](./HOMECONNECT-QA-SCORECARD.md) and [INTENSIVE-QA-RESULTS.md](./INTENSIVE-QA-RESULTS.md).

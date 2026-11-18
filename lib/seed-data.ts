@@ -221,7 +221,8 @@ export const DEMO_USERS = [
     email: "agent@demo.com",
     name: "Alex Agent",
     role: "AGENT" as const,
-    kycLevel: "STANDARD" as const,
+    // Pro features (listings, wallet, escrow handover) require Tier 3 ENHANCED.
+    kycLevel: "ENHANCED" as const,
     kycStatus: "VERIFIED" as const,
   },
   {

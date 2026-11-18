@@ -89,6 +89,7 @@ async function main() {
         role: user.role as Role,
         passwordHash,
         active: true,
+        emailVerified: new Date(),
         ...kyc,
       },
       create: {
@@ -97,6 +98,7 @@ async function main() {
         role: user.role as Role,
         passwordHash,
         active: true,
+        emailVerified: new Date(),
         ...kyc,
       },
     });

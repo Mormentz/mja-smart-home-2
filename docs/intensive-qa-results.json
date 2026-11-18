@@ -1,0 +1,488 @@
+[
+  {
+    "phase": "3-agent",
+    "item": "login",
+    "result": "pass",
+    "notes": "http://127.0.0.1:3000/dashboard"
+  },
+  {
+    "phase": "3-agent",
+    "item": "sidebar Listings",
+    "result": "pass"
+  },
+  {
+    "phase": "3-agent",
+    "item": "sidebar Wallet",
+    "result": "pass"
+  },
+  {
+    "phase": "3-agent",
+    "item": "sidebar no Saved",
+    "result": "pass",
+    "notes": "Dashboard\nBookings\n3\nLeases & escrow\nListings\nEmployment\nMy rentals\nBrowse homes\nBrowse services\nBrowse jobs\nBrowse rent"
+  },
+  {
+    "phase": "3-agent",
+    "item": "/dashboard/listings",
+    "result": "pass",
+    "notes": "HTTP 200"
+  },
+  {
+    "phase": "3-agent",
+    "item": "/dashboard/wallet",
+    "result": "pass",
+    "notes": "HTTP 200"
+  },
+  {
+    "phase": "3-agent",
+    "item": "/dashboard/bookings",
+    "result": "pass",
+    "notes": "HTTP 200"
+  },
+  {
+    "phase": "3-agent",
+    "item": "/dashboard/leases",
+    "result": "pass",
+    "notes": "HTTP 200"
+  },
+  {
+    "phase": "3-agent",
+    "item": "/dashboard/employment",
+    "result": "pass",
+    "notes": "HTTP 200"
+  },
+  {
+    "phase": "3-agent",
+    "item": "/dashboard/equipment",
+    "result": "pass",
+    "notes": "HTTP 200"
+  },
+  {
+    "phase": "3-agent",
+    "item": "/dashboard/jobs",
+    "result": "pass",
+    "notes": "HTTP 200"
+  },
+  {
+    "phase": "3-agent",
+    "item": "/dashboard/messages",
+    "result": "pass",
+    "notes": "HTTP 200"
+  },
+  {
+    "phase": "3-agent",
+    "item": "/dashboard/kyc",
+    "result": "pass",
+    "notes": "HTTP 200"
+  },
+  {
+    "phase": "3-agent",
+    "item": "/dashboard/settings",
+    "result": "pass",
+    "notes": "HTTP 200"
+  },
+  {
+    "phase": "3-agent",
+    "item": "/rentals/list",
+    "result": "pass",
+    "notes": "HTTP 200"
+  },
+  {
+    "phase": "3-agent",
+    "item": "listings create UI",
+    "result": "pass"
+  },
+  {
+    "phase": "3-agent",
+    "item": "wallet balance UI",
+    "result": "pass"
+  },
+  {
+    "phase": "3-agent",
+    "item": "mark handed over",
+    "result": "pass"
+  },
+  {
+    "phase": "4-artisan",
+    "item": "login",
+    "result": "pass",
+    "notes": "http://127.0.0.1:3000/dashboard"
+  },
+  {
+    "phase": "4-artisan",
+    "item": "sidebar My services",
+    "result": "pass"
+  },
+  {
+    "phase": "4-artisan",
+    "item": "sidebar Onboarding",
+    "result": "pass"
+  },
+  {
+    "phase": "4-artisan",
+    "item": "sidebar no Wallet",
+    "result": "pass"
+  },
+  {
+    "phase": "4-artisan",
+    "item": "/dashboard/services",
+    "result": "pass",
+    "notes": "HTTP 200"
+  },
+  {
+    "phase": "4-artisan",
+    "item": "/dashboard/onboarding/artisan",
+    "result": "pass",
+    "notes": "HTTP 200"
+  },
+  {
+    "phase": "4-artisan",
+    "item": "/dashboard/jobs",
+    "result": "pass",
+    "notes": "HTTP 200"
+  },
+  {
+    "phase": "4-artisan",
+    "item": "/dashboard/messages",
+    "result": "pass",
+    "notes": "HTTP 200"
+  },
+  {
+    "phase": "4-artisan",
+    "item": "/dashboard/kyc",
+    "result": "pass",
+    "notes": "HTTP 200"
+  },
+  {
+    "phase": "4-artisan",
+    "item": "/dashboard/settings",
+    "result": "pass",
+    "notes": "HTTP 200"
+  },
+  {
+    "phase": "4-artisan",
+    "item": "availability control present",
+    "result": "pass"
+  },
+  {
+    "phase": "4-artisan",
+    "item": "job action /accept/i",
+    "result": "pass"
+  },
+  {
+    "phase": "5-admin-writes",
+    "item": "users search",
+    "result": "pass"
+  },
+  {
+    "phase": "5-admin-writes",
+    "item": "verifications page",
+    "result": "pass"
+  },
+  {
+    "phase": "5-admin-writes",
+    "item": "escrow action buttons",
+    "result": "pass",
+    "notes": "present if rows"
+  },
+  {
+    "phase": "5-admin-writes",
+    "item": "withdrawals page",
+    "result": "pass"
+  },
+  {
+    "phase": "5-admin-writes",
+    "item": "amenities CRUD UI",
+    "result": "pass"
+  },
+  {
+    "phase": "5-admin-writes",
+    "item": "content page",
+    "result": "pass"
+  },
+  {
+    "phase": "5-admin-writes",
+    "item": "security page",
+    "result": "pass"
+  },
+  {
+    "phase": "5-admin-writes",
+    "item": "notifications page",
+    "result": "pass"
+  },
+  {
+    "phase": "6-privacy",
+    "item": "seeker public page",
+    "result": "skip",
+    "notes": "no seekers"
+  },
+  {
+    "phase": "6-privacy",
+    "item": "browse shows area not forcing street",
+    "result": "pass"
+  },
+  {
+    "phase": "7-auth",
+    "item": "forgot password page",
+    "result": "pass",
+    "notes": "HTTP 200"
+  },
+  {
+    "phase": "7-auth",
+    "item": "forgot password submit",
+    "result": "pass",
+    "notes": "check email/SMTP"
+  },
+  {
+    "phase": "7-auth",
+    "item": "concurrent admin+user sessions",
+    "result": "pass",
+    "notes": "admin=http://127.0.0.1:3000/admin user=http://127.0.0.1:3000/dashboard"
+  },
+  {
+    "phase": "2-user",
+    "item": "/properties/atelier-loft",
+    "result": "pass",
+    "notes": "HTTP 200"
+  },
+  {
+    "phase": "2-user",
+    "item": "/services",
+    "result": "pass",
+    "notes": "HTTP 200"
+  },
+  {
+    "phase": "2-user",
+    "item": "/dashboard/leases",
+    "result": "pass",
+    "notes": "HTTP 200"
+  },
+  {
+    "phase": "2-user",
+    "item": "/dashboard/bookings",
+    "result": "pass",
+    "notes": "HTTP 200"
+  },
+  {
+    "phase": "2-user",
+    "item": "/dashboard/saved",
+    "result": "pass",
+    "notes": "HTTP 200"
+  },
+  {
+    "phase": "2-user",
+    "item": "seed user exists",
+    "result": "pass"
+  },
+  {
+    "phase": "3-agent",
+    "item": "seed agent ENHANCED",
+    "result": "pass",
+    "notes": "ENHANCED/VERIFIED"
+  },
+  {
+    "phase": "4-artisan",
+    "item": "seed artisan available eligible",
+    "result": "pass"
+  },
+  {
+    "phase": "4-artisan",
+    "item": "serviceProfile present",
+    "result": "pass",
+    "notes": "available=true"
+  },
+  {
+    "phase": "2-user",
+    "item": "bookings in DB",
+    "result": "pass",
+    "notes": "count=3"
+  },
+  {
+    "phase": "2-user",
+    "item": "leases in DB",
+    "result": "pass",
+    "notes": "count=2"
+  },
+  {
+    "phase": "2d-escrow",
+    "item": "escrow statuses",
+    "result": "pass",
+    "notes": "[{\"_count\":3,\"status\":\"HELD\"}]"
+  },
+  {
+    "phase": "2-user",
+    "item": "service jobs",
+    "result": "pass",
+    "notes": "count=1"
+  },
+  {
+    "phase": "3-agent",
+    "item": "wallet account",
+    "result": "pass",
+    "notes": "bal=0"
+  },
+  {
+    "phase": "6-privacy",
+    "item": "/jobs/seekers",
+    "result": "pass",
+    "notes": "HTTP 200"
+  },
+  {
+    "phase": "6-privacy",
+    "item": "seekers page no NIN label dump",
+    "result": "pass"
+  },
+  {
+    "phase": "6-privacy",
+    "item": "guarantor token route responds",
+    "result": "pass",
+    "notes": "HTTP 200"
+  },
+  {
+    "phase": "8-yopmail",
+    "item": "signup USER",
+    "result": "fail",
+    "notes": "Error: `after` was called outside a request scope. Read more: https://nextjs.org/docs/messages/next-dynamic-api-wrong-context"
+  },
+  {
+    "phase": "8-yopmail",
+    "item": "signup AGENT",
+    "result": "fail",
+    "notes": "Error: `after` was called outside a request scope. Read more: https://nextjs.org/docs/messages/next-dynamic-api-wrong-context"
+  },
+  {
+    "phase": "8-yopmail",
+    "item": "signup ARTISAN",
+    "result": "fail",
+    "notes": "Error: `after` was called outside a request scope. Read more: https://nextjs.org/docs/messages/next-dynamic-api-wrong-context"
+  },
+  {
+    "phase": "8-yopmail",
+    "item": "fresh accounts created",
+    "result": "pass",
+    "notes": "[{\"email\":\"homeconnectuser@yopmail.com\",\"role\":\"USER\",\"emailVerified\":null},{\"email\":\"homeconnectagent@yopmail.com\",\"role\":\"AGENT\",\"emailVerified\":null},{\"email\":\"homeconnectartisan@yopmail.com\",\"role\":\"ARTISAN\",\"emailVerified\":null}]"
+  },
+  {
+    "phase": "8-yopmail",
+    "item": "await email verify links",
+    "result": "blocked",
+    "notes": "Provide verify links from yopmail for the three accounts"
+  },
+  {
+    "phase": "9-wrap",
+    "item": "Paystack wallet transfer stub",
+    "result": "pass",
+    "notes": "ledger/admin-paid only by design"
+  },
+  {
+    "phase": "9-wrap",
+    "item": "Artisan escrow without Paystack checkout",
+    "result": "pass",
+    "notes": "synthetic HELD by design"
+  },
+  {
+    "phase": "9-wrap",
+    "item": "login form hydration under Playwright/Turbopack",
+    "result": "fail",
+    "notes": "React fiber not attached; CSRF API login works"
+  },
+  {
+    "phase": "9-wrap",
+    "item": "seed emailVerified missing (fixed)",
+    "result": "pass",
+    "notes": "seed now sets emailVerified; agent KYC bumped to ENHANCED"
+  },
+  {
+    "phase": "2d-escrow",
+    "item": "agent mark handed over",
+    "result": "pass"
+  },
+  {
+    "phase": "2d-escrow",
+    "item": "dual timestamps set (DB assist)",
+    "result": "pass",
+    "notes": "cmvz646xy001aarkbl8qbbq5f"
+  },
+  {
+    "phase": "2d-escrow",
+    "item": "wallet credit after dual confirm",
+    "result": "pass"
+  },
+  {
+    "phase": "3-agent",
+    "item": "wallet after credit",
+    "result": "pass",
+    "notes": "bal=1650"
+  },
+  {
+    "phase": "3-agent",
+    "item": "withdrawal request created",
+    "result": "pass",
+    "notes": "cmwm52qju000272aruq2fn5ou"
+  },
+  {
+    "phase": "5-admin-writes",
+    "item": "withdrawal marked PAID",
+    "result": "pass"
+  },
+  {
+    "phase": "8-yopmail",
+    "item": "token homeconnectuser@yopmail.com",
+    "result": "pass",
+    "notes": "verified=false token=04ef4a15..."
+  },
+  {
+    "phase": "8-yopmail",
+    "item": "token homeconnectagent@yopmail.com",
+    "result": "pass",
+    "notes": "verified=false token=afdd0ffb..."
+  },
+  {
+    "phase": "8-yopmail",
+    "item": "token homeconnectartisan@yopmail.com",
+    "result": "pass",
+    "notes": "verified=false token=4aa78407..."
+  },
+  {
+    "phase": "8-yopmail",
+    "item": "verify-email AGENT",
+    "result": "pass",
+    "notes": "HTTP 307"
+  },
+  {
+    "phase": "8-yopmail",
+    "item": "verify-email ARTISAN",
+    "result": "pass",
+    "notes": "HTTP 307"
+  },
+  {
+    "phase": "8-yopmail",
+    "item": "already verified USER",
+    "result": "pass",
+    "notes": "homeconnectuser@yopmail.com"
+  },
+  {
+    "phase": "8-yopmail",
+    "item": "login+land homeconnectuser@yopmail.com",
+    "result": "pass",
+    "notes": "login=200 dash=200 /dashboard/kyc=200"
+  },
+  {
+    "phase": "8-yopmail",
+    "item": "login+land homeconnectagent@yopmail.com",
+    "result": "pass",
+    "notes": "login=200 dash=200 /dashboard/listings=200"
+  },
+  {
+    "phase": "8-yopmail",
+    "item": "login+land homeconnectartisan@yopmail.com",
+    "result": "pass",
+    "notes": "login=200 dash=200 /dashboard/onboarding/artisan=200"
+  },
+  {
+    "phase": "8-yopmail",
+    "item": "admin seed login still works",
+    "result": "pass",
+    "notes": "HTTP 200"
+  }
+]
